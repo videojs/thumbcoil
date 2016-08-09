@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title></title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width">
+
+  <link rel="stylesheet" href="css/normalize.min.css">
+  <link rel="stylesheet" href="css/main.css">
+
+  <style>
+    fieldset {
+      padding: 10px;
+      border: 1px solid #ccc;
+    }
+    mp4-box {
+      background-color: rgba(0,0,0,0.01);
+      display: block;
+      margin-left: 10px;
+      padding-top: 5px;
+      padding-bottom: 5px;
+    }
+    mp4-box[type='ftyp']>mp4-box-type,
+    mp4-box[type='access_unit_delimiter_rbsp']>mp4-box-type {
+      background-color: rgba(128,96,64,1);
+    }
+    mp4-box[type='moov']>mp4-box-type,
+    mp4-box[type='slice_layer_without_partitioning_rbsp_idr']>mp4-box-type {
+      background-color: rgba(128,64,96,1);
+    }
+    mp4-box[type='moof']>mp4-box-type,
+    mp4-box[type='slice_layer_without_partitioning_rbsp']>mp4-box-type {
+      background-color: rgba(64,128,96,1);
+    }
+    mp4-box[type='mdat']>mp4-box-type,
+    mp4-box[type='seq_parameter_set_rbsp']>mp4-box-type,
+    mp4-box[type='pic_parameter_set_rbsp']>mp4-box-type {
+      background-color: rgba(64,96,128,1);
+    }
+    mp4-box-type {
+      background-color: rgba(96,96,96,1);
+      color: #eee;
+      display: block;
+      padding: 5px;
+    }
+    mp4-boxes {
+      display: block;
+    }
+    mp4-properties {
+      display: table;
+    }
+    mp4-property {
+      display: table-row;
+    }
+    mp4-name, mp4-value {
+      display: table-cell;
+      padding: 5px;
+    }
+    mp4-box-type::before {
+      content: '\25bc ';
+    }
+    mp4-box-type.collapsed::before {
+      content: '\25b6 ';
+    }
+    mp4-box-type.collapsed ~ mp4-boxes,
+    mp4-box-type.collapsed ~ mp4-properties {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-container">
+    <header class="wrapper clearfix">
+      <h1 class="title">MP4 Inspector</h1>
+    </header>
+  </div>
+
+  <div class="main-container">
+    <div class="main wrapper clearfix">
+
+      <article>
+        <header>
+          <p>This page allows you to inspect the structure of an MP4.</p>
+        </header>
+        <section>
+          <h2>Inputs</h2>
+          <form id="inputs">
+            <fieldset>
+              <legend>MP4 Input</legend>
+              <label>
+                Load an MP4:
+                <input type="file" id="working">
+              </label>
+            </fieldset>
+          </form>
+        </section>
+        <section>
+          <h2>Structure</h2>
+          <div class="result-wrapper">
+            <pre class="working-boxes"></pre>
+          </div>
+        </section>
+      </article>
+
+    </div> <!-- #main -->
+  </div> <!-- #main-container -->
+
+  <div class="footer-container">
+    <footer class="wrapper">
+      <h3>footer</h3>
+    </footer>
+  </div>
+
+  <script src="../dist/thumbcoil.js"></script>
+
+  <script>
+    'use strict';
+    var
+      $ = document.querySelector.bind(document),
+      working = $('#working'),
+      workingBoxes = $('.working-boxes');
+
+    working.addEventListener('change', function() {
+      var reader = new FileReader();
+
+      // do nothing if no file was chosen
+      if (!this.files[0]) {
+        return;
+      }
+
+      reader.addEventListener('loadend', function() {
+        var bytes = new Uint8Array(reader.result);
+        var workingParsed = thumbcoil.mp4Inspector.inspect(bytes);
+
+        // clear old box info
+  //      workingBoxes.innerHTML = thumbcoil.mp4Inspector.textify(workingParsed);
+        workingBoxes.innerHTML = '';
+        workingBoxes.appendChild(thumbcoil.mp4Inspector.domify(workingParsed));
+      });
+      reader.readAsArrayBuffer(this.files[0]);
+    }, false);
+  </script>
+  <script>
+    document.body.addEventListener('click', function (e) {
+      if (e.srcElement.tagName === 'MP4-BOX-TYPE') {
+        e.srcElement.classList.toggle('collapsed');
+      }
+    });
+  </script>
+</body>
+</html>
