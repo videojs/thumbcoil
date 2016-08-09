@@ -1,9 +1,8 @@
-import {inspect, textify, domify} from './mp4';
+import mp4Inspector from './mp4';
+import tsInspector from './ts';
 
-const mp4Inspector = {
-  inspect,
-  textify,
-  domify
+export default {
+  mp4Inspector,
+  tsInspector
 };
 
-export default mp4Inspector;

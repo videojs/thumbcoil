@@ -3,17 +3,17 @@
 import {
   discardEmulationPrevention,
   picParameterSet,
-  seqParameterSet,
-  sliceLayerWithoutPartitioning,
-  accessUnitDelimiter
+  seqParameterSet
 } from '../bit-streams/h264';
+
+import {nalParseAVCC, mergePS} from './common/nal-parse';
 
   /**
    * Returns the string representation of an ASCII encoded four byte buffer.
    * @param buffer {Uint8Array} a four-byte buffer to translate
    * @return {string} the corresponding string
    */
-const parseType = function(buffer) {
+const parseType = function (buffer) {
   var result = '';
   result += String.fromCharCode(buffer[0]);
   result += String.fromCharCode(buffer[1]);
@@ -22,11 +22,11 @@ const parseType = function(buffer) {
   return result;
 };
 
-const parseMp4Date = function(seconds) {
+const parseMp4Date = function (seconds) {
   return new Date(seconds * 1000 - 2082844800000);
 };
 
-const parseSampleFlags = function(flags) {
+const parseSampleFlags = function (flags) {
   return {
     isLeading: (flags[0] & 0x0c) >>> 2,
     dependsOn: flags[0] & 0x03,
@@ -42,190 +42,12 @@ let lastSPS;
 let lastPPS;
 let lastOptions;
 
-const mergePS = function (a, b) {
-  var newObj = {};
-
-  if (a) {
-    Object.keys(a).forEach(function (key) {
-      newObj[key] = a[key];
-    });
-  }
-
-  if (b) {
-    Object.keys(b).forEach(function (key) {
-      newObj[key] = b[key];
-    });
-  }
-
-  return newObj;
-};
-
-const nalParse = function(avcStream) {
-  var
-    avcView = new DataView(avcStream.buffer, avcStream.byteOffset, avcStream.byteLength),
-    result = [],
-    nalData,
-    i,
-    length;
-
-  for (i = 0; i + 4 < avcStream.length; i += length) {
-    length = avcView.getUint32(i);
-    i += 4;
-
-    // bail if this doesn't appear to be an H264 stream
-    if (length <= 0) {
-      result.push({
-        type: 'MALFORMED-DATA'
-      });
-      continue;
-    }
-    if (length > avcStream.length) {
-      result.push({
-        type: 'UNKNOWN MDAT DATA'
-      });
-      return;
-    }
-
-    if (length > 1) {
-      nalData = discardEmulationPrevention(avcStream.subarray(i + 1, i + length));
-    }
-    var nalUnitType = (avcStream[i] & 0x1F);
-    var nalRefIdc = (avcStream[i] & 0x60) >>> 5;
-
-    if (lastOptions) {
-      lastOptions.nal_unit_type = nalUnitType;
-      lastOptions.nal_ref_idc = nalRefIdc;
-    }
-
-    switch (nalUnitType) {
-    case 0x01:
-      var nalObject = sliceLayerWithoutPartitioning.decode(nalData, lastOptions);
-      nalObject.type = 'slice_layer_without_partitioning_rbsp';
-      nalObject.nal_ref_idc = nalRefIdc;
-      nalObject.size = nalData.length;
-      result.push(nalObject);
-      break;
-    case 0x02:
-      result.push({
-        type: 'slice_data_partition_a_layer_rbsp',
-        size: nalData.length
-      });
-      break;
-    case 0x03:
-      result.push({
-        type: 'slice_data_partition_b_layer_rbsp',
-        size: nalData.length});
-      break;
-    case 0x04:
-      result.push({
-        type: 'slice_data_partition_c_layer_rbsp',
-        size: nalData.length
-      });
-      break;
-    case 0x05:
-      var newOptions = mergePS(lastOptions, {idrPicFlag: 1});
-      var nalObject = sliceLayerWithoutPartitioning.decode(nalData, newOptions);
-      nalObject.type = 'slice_layer_without_partitioning_rbsp_idr';
-      nalObject.nal_ref_idc = nalRefIdc;
-      nalObject.size = nalData.length;
-      result.push(nalObject);
-      break;
-    case 0x06:
-      result.push({
-        type: 'sei_rbsp',
-        size: nalData.length
-      });
-      break;
-    case 0x07:
-      lastSPS = seqParameterSet.decode(nalData);
-      lastOptions = mergePS(lastPPS, lastSPS);
-      lastSPS.type = 'seq_parameter_set_rbsp';
-      lastSPS.size = nalData.length;
-      result.push(lastSPS);
-      break;
-    case 0x08:
-      lastPPS = picParameterSet.decode(nalData);
-      lastOptions = mergePS(lastPPS, lastSPS);
-      lastPPS.type = 'pic_parameter_set_rbsp';
-      lastPPS.size = nalData.length;
-      result.push(lastPPS);
-      break;
-    case 0x09:
-      var nalObject = accessUnitDelimiter.decode(nalData);
-      nalObject.type = 'access_unit_delimiter_rbsp';
-      nalObject.size = nalData.length;
-      result.push(nalObject);
-      break;
-    case 0x0A:
-      result.push({
-        type: 'end_of_seq_rbsp',
-        size: nalData.length});
-      break;
-    case 0x0B:
-      result.push({
-        type: 'end_of_stream_rbsp',
-        size: nalData.length});
-      break;
-    case 0x0C:
-      result.push({
-        type: 'filler_data_rbsp',
-        size: nalData.length
-      });
-      break;
-    case 0x0D:
-      result.push({
-        type: 'seq_parameter_set_extension_rbsp',
-        size: nalData.length
-      });
-      break;
-    case 0x0E:
-      result.push({
-        type: 'prefix_nal_unit_rbsp',
-        size: nalData.length
-      });
-      break;
-    case 0x0F:
-      result.push({
-        type: 'subset_seq_parameter_set_rbsp',
-        size: nalData.length
-      });
-      break;
-    case 0x10:
-      result.push({
-        type: 'depth_parameter_set_rbsp',
-        size: nalData.length
-      });
-      break;
-    case 0x13:
-      result.push({
-        type: 'slice_layer_without_partitioning_rbsp_aux',
-        size: nalData.length
-      });
-      break;
-    case 0x14:
-    case 0x15:
-      result.push({
-        type: 'slice_layer_extension_rbsp',
-        size: nalData.length
-      });
-      break;
-    default:
-      result.push({
-        type: 'INVALID NAL-UNIT-TYPE - ' + nalUnitType,
-        size: nalData.length
-      });
-      break;
-    }
-  }
-  return result;
-};
-
 // registry of handlers for individual mp4 box types
 const parse = {
   // codingname, not a first-class box type. stsd entries share the
   // same format as real boxes so the parsing infrastructure can be
   // shared
-  avc1: function(data) {
+  avc1: function (data) {
     var view = new DataView(data.buffer, data.byteOffset, data.byteLength);
     return {
       dataReferenceIndex: view.getUint16(6),
@@ -238,7 +60,7 @@ const parse = {
       config: inspectMp4(data.subarray(78, data.byteLength))
     };
   },
-  avcC: function(data) {
+  avcC: function (data) {
     var
       view = new DataView(data.buffer, data.byteOffset, data.byteLength),
       result = {
@@ -262,7 +84,6 @@ const parse = {
       nalSize = view.getUint16(offset);
       offset += 2;
       var nalData = discardEmulationPrevention(new Uint8Array(data.subarray(offset + 1, offset + nalSize)));
-      console.log(nalData);
       lastSPS = seqParameterSet.decode(nalData);
       lastOptions = mergePS(lastPPS, lastSPS);
       result.sps.push(lastSPS);
@@ -275,7 +96,6 @@ const parse = {
       nalSize = view.getUint16(offset);
       offset += 2;
       var nalData = discardEmulationPrevention(new Uint8Array(data.subarray(offset + 1, offset + nalSize)));
-      console.log(nalData);
       lastPPS = picParameterSet.decode(nalData);
       lastOptions = mergePS(lastPPS, lastSPS);
       result.pps.push(lastPPS);
@@ -283,7 +103,7 @@ const parse = {
     }
     return result;
   },
-  btrt: function(data) {
+  btrt: function (data) {
     var view = new DataView(data.buffer, data.byteOffset, data.byteLength);
     return {
       bufferSizeDB: view.getUint32(0),
@@ -291,7 +111,7 @@ const parse = {
       avgBitrate: view.getUint32(8)
     };
   },
-  esds: function(data) {
+  esds: function (data) {
     return {
       version: data[0],
       flags: new Uint8Array(data.subarray(1, 4)),
@@ -320,7 +140,7 @@ const parse = {
       }
     };
   },
-  ftyp: function(data) {
+  ftyp: function (data) {
     var
       view = new DataView(data.buffer, data.byteOffset, data.byteLength),
       result = {
@@ -335,19 +155,19 @@ const parse = {
     }
     return result;
   },
-  dinf: function(data) {
+  dinf: function (data) {
     return {
       boxes: inspectMp4(data)
     };
   },
-  dref: function(data) {
+  dref: function (data) {
     return {
       version: data[0],
       flags: new Uint8Array(data.subarray(1, 4)),
       dataReferences: inspectMp4(data.subarray(8))
     };
   },
-  hdlr: function(data) {
+  hdlr: function (data) {
     var
       view = new DataView(data.buffer, data.byteOffset, data.byteLength),
       result = {
@@ -373,13 +193,13 @@ const parse = {
 
     return result;
   },
-  mdat: function(data) {
+  mdat: function (data) {
     return {
       byteLength: data.byteLength,
-      nals: nalParse(data)
+      nals: nalParseAVCC(data)
     };
   },
-  mdhd: function(data) {
+  mdhd: function (data) {
     var
       view = new DataView(data.buffer, data.byteOffset, data.byteLength),
       i = 4,
@@ -417,12 +237,12 @@ const parse = {
 
     return result;
   },
-  mdia: function(data) {
+  mdia: function (data) {
     return {
       boxes: inspectMp4(data)
     };
   },
-  mfhd: function(data) {
+  mfhd: function (data) {
     return {
       version: data[0],
       flags: new Uint8Array(data.subarray(1, 4)),
@@ -432,7 +252,7 @@ const parse = {
         (data[7])
     };
   },
-  minf: function(data) {
+  minf: function (data) {
     return {
       boxes: inspectMp4(data)
     };
@@ -440,7 +260,7 @@ const parse = {
   // codingname, not a first-class box type. stsd entries share the
   // same format as real boxes so the parsing infrastructure can be
   // shared
-  mp4a: function(data) {
+  mp4a: function (data) {
     var
       view = new DataView(data.buffer, data.byteOffset, data.byteLength),
       result = {
@@ -461,22 +281,22 @@ const parse = {
     }
     return result;
   },
-  moof: function(data) {
+  moof: function (data) {
     return {
       boxes: inspectMp4(data)
     };
   },
-  moov: function(data) {
+  moov: function (data) {
     return {
       boxes: inspectMp4(data)
     };
   },
-  mvex: function(data) {
+  mvex: function (data) {
     return {
       boxes: inspectMp4(data)
     };
   },
-  mvhd: function(data) {
+  mvhd: function (data) {
     var
       view = new DataView(data.buffer, data.byteOffset, data.byteLength),
       i = 4,
@@ -518,7 +338,7 @@ const parse = {
     result.nextTrackId = view.getUint32(i);
     return result;
   },
-  pdin: function(data) {
+  pdin: function (data) {
     var view = new DataView(data.buffer, data.byteOffset, data.byteLength);
     return {
       version: view.getUint8(0),
@@ -527,7 +347,7 @@ const parse = {
       initialDelay: view.getUint32(8)
     };
   },
-  sdtp: function(data) {
+  sdtp: function (data) {
     var
       result = {
         version: data[0],
@@ -544,7 +364,7 @@ const parse = {
     }
     return result;
   },
-  sidx: function(data) {
+  sidx: function (data) {
     var view = new DataView(data.buffer, data.byteOffset, data.byteLength),
         result = {
           version: data[0],
@@ -571,19 +391,19 @@ const parse = {
 
     return result;
   },
-  smhd: function(data) {
+  smhd: function (data) {
     return {
       version: data[0],
       flags: new Uint8Array(data.subarray(1, 4)),
       balance: data[4] + (data[5] / 256)
     };
   },
-  stbl: function(data) {
+  stbl: function (data) {
     return {
       boxes: inspectMp4(data)
     };
   },
-  stco: function(data) {
+  stco: function (data) {
     var
       view = new DataView(data.buffer, data.byteOffset, data.byteLength),
       result = {
@@ -598,7 +418,7 @@ const parse = {
     }
     return result;
   },
-  stsc: function(data) {
+  stsc: function (data) {
     var
       view = new DataView(data.buffer, data.byteOffset, data.byteLength),
       entryCount = view.getUint32(4),
@@ -617,14 +437,14 @@ const parse = {
     }
     return result;
   },
-  stsd: function(data) {
+  stsd: function (data) {
     return {
       version: data[0],
       flags: new Uint8Array(data.subarray(1, 4)),
       sampleDescriptions: inspectMp4(data.subarray(8))
     };
   },
-  stsz: function(data) {
+  stsz: function (data) {
     var
       view = new DataView(data.buffer, data.byteOffset, data.byteLength),
       result = {
@@ -639,7 +459,7 @@ const parse = {
     }
     return result;
   },
-  stts: function(data) {
+  stts: function (data) {
     var
       view = new DataView(data.buffer, data.byteOffset, data.byteLength),
       result = {
@@ -658,10 +478,10 @@ const parse = {
     }
     return result;
   },
-  styp: function(data) {
+  styp: function (data) {
     return parse.ftyp(data);
   },
-  tfdt: function(data) {
+  tfdt: function (data) {
     var result = {
       version: data[0],
       flags: new Uint8Array(data.subarray(1, 4)),
@@ -673,7 +493,7 @@ const parse = {
     }
     return result;
   },
-  tfhd: function(data) {
+  tfhd: function (data) {
     var
       view = new DataView(data.buffer, data.byteOffset, data.byteLength),
       result = {
@@ -711,7 +531,7 @@ const parse = {
     }
     return result;
   },
-  tkhd: function(data) {
+  tkhd: function (data) {
     var
       view = new DataView(data.buffer, data.byteOffset, data.byteLength),
       i = 4,
@@ -756,17 +576,17 @@ const parse = {
     result.height = view.getUint16(i) + (view.getUint16(i + 2) / 16);
     return result;
   },
-  traf: function(data) {
+  traf: function (data) {
     return {
       boxes: inspectMp4(data)
     };
   },
-  trak: function(data) {
+  trak: function (data) {
     return {
       boxes: inspectMp4(data)
     };
   },
-  trex: function(data) {
+  trex: function (data) {
     var view = new DataView(data.buffer, data.byteOffset, data.byteLength);
     return {
       version: data[0],
@@ -783,7 +603,7 @@ const parse = {
       sampleDegradationPriority: view.getUint16(22)
     };
   },
-  trun: function(data) {
+  trun: function (data) {
     var
       result = {
         version: data[0],
@@ -849,13 +669,13 @@ const parse = {
     }
     return result;
   },
-  'url ': function(data) {
+  'url ': function (data) {
     return {
       version: data[0],
       flags: new Uint8Array(data.subarray(1, 4))
     };
   },
-  vmhd: function(data) {
+  vmhd: function (data) {
     var view = new DataView(data.buffer, data.byteOffset, data.byteLength);
     return {
       version: data[0],
@@ -875,7 +695,7 @@ const parse = {
  * @param data {Uint8Array} the binary data of the media to be inspected
  * @return {array} a javascript array of potentially nested box objects
  */
-const inspectMp4 = function(data) {
+const inspectMp4 = function (data) {
   var
     i = 0,
     result = [],
@@ -910,7 +730,7 @@ const inspectMp4 = function(data) {
       pendingMDAT = data.subarray(i + 8, end);
     } else {
       // parse type-specific data
-      box = (parse[type] || function(data) {
+      box = (parse[type] || function (data) {
         return {
           data: data
         };
@@ -945,30 +765,30 @@ const inspectMp4 = function(data) {
  * the elements of inspectedMp4. Assumed to be zero if unspecified.
  * @return {string} a text representation of the parsed MP4
  */
-const textifyMp4 = function(inspectedMp4, depth) {
+const textifyMp4 = function (inspectedMp4, depth) {
   var indent;
   depth = depth || 0;
   indent = new Array(depth * 2 + 1).join(' ');
 
   // iterate over all the boxes
-  return inspectedMp4.map(function(box, index) {
+  return inspectedMp4.map(function (box, index) {
 
     // list the box type first at the current indentation level
     return indent + box.type + '\n' +
 
       // the type is already included and handle child boxes separately
-      Object.keys(box).filter(function(key) {
+      Object.keys(box).filter(function (key) {
         return key !== 'type' && key !== 'boxes';
 
       // output all the box properties
-      }).map(function(key) {
+      }).map(function (key) {
         var prefix = indent + '  ' + key + ': ',
             value = box[key];
 
         // print out raw bytes as hexademical
         if (value instanceof Uint8Array || value instanceof Uint32Array) {
           var bytes = Array.prototype.slice.call(new Uint8Array(value.buffer, value.byteOffset, value.byteLength))
-              .map(function(byte) {
+              .map(function (byte) {
                 return ' ' + ('00' + byte.toString(16)).slice(-2);
               }).join('').match(/.{1,24}/g);
           if (!bytes) {
@@ -977,7 +797,7 @@ const textifyMp4 = function(inspectedMp4, depth) {
           if (bytes.length === 1) {
             return prefix + '<' + bytes.join('').slice(1) + '>';
           }
-          return prefix + '<\n' + bytes.map(function(line) {
+          return prefix + '<\n' + bytes.map(function (line) {
             return indent + '  ' + line;
           }).join('\n') + '\n' + indent + '  >';
         }
@@ -985,7 +805,7 @@ const textifyMp4 = function(inspectedMp4, depth) {
         // stringify generic objects
         return prefix +
             JSON.stringify(value, null, 2)
-              .split('\n').map(function(line, index) {
+              .split('\n').map(function (line, index) {
                 if (index === 0) {
                   return line;
                 }

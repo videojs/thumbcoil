@@ -146,6 +146,7 @@ export const verify = function (name) {
       let len = expGolomb.bitReservoir.length;
       if (len !== 0) {
         console.trace('ERROR: ' + name + ' was not completely parsed. There were (' + len + ') bits remaining!');
+        console.log(expGolomb.originalBitReservoir);
       }
     },
     encode: (expGolomb, input, options, index) => {}

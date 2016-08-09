@@ -72,7 +72,7 @@
 <body>
   <div class="header-container">
     <header class="wrapper clearfix">
-      <h1 class="title">MP4 Inspector</h1>
+      <h1 class="title">Video Inspector</h1>
     </header>
   </div>
 
@@ -81,15 +81,15 @@
 
       <article>
         <header>
-          <p>This page allows you to inspect the structure of an MP4.</p>
+          <p>This page allows you to inspect the structure of an MP4 or MPEG-2 Transport Stream.</p>
         </header>
         <section>
           <h2>Inputs</h2>
           <form id="inputs">
             <fieldset>
-              <legend>MP4 Input</legend>
+              <legend>Video Input</legend>
               <label>
-                Load an MP4:
+                Load an MP4 or MP2TS:
                 <input type="file" id="working">
               </label>
             </fieldset>
@@ -98,7 +98,7 @@
         <section>
           <h2>Structure</h2>
           <div class="result-wrapper">
-            <pre class="working-boxes"></pre>
+            <div class="working-boxes"></div>
           </div>
         </section>
       </article>
@@ -128,15 +128,24 @@
       if (!this.files[0]) {
         return;
       }
+      var fileTypeInspector = 'mp4Inspector';
+
+      if (/\.ts$/i.test(this.files[0].name)) {
+        fileTypeInspector = 'tsInspector';
+      }
 
       reader.addEventListener('loadend', function() {
         var bytes = new Uint8Array(reader.result);
-        var workingParsed = thumbcoil.mp4Inspector.inspect(bytes);
+        var workingParsed = thumbcoil[fileTypeInspector].inspect(bytes);
 
         // clear old box info
-  //      workingBoxes.innerHTML = thumbcoil.mp4Inspector.textify(workingParsed);
         workingBoxes.innerHTML = '';
-        workingBoxes.appendChild(thumbcoil.mp4Inspector.domify(workingParsed));
+
+        if (!(workingParsed instanceof HTMLElement)) {
+          workingBoxes.appendChild(thumbcoil[fileTypeInspector].domify(workingParsed));
+        } else {
+          workingBoxes.appendChild(workingParsed);
+        }
       });
       reader.readAsArrayBuffer(this.files[0]);
     }, false);

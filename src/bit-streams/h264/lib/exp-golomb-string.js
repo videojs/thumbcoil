@@ -5,6 +5,7 @@
 
 export const ExpGolombDecoder = function (bitString) {
   this.bitReservoir = bitString;
+  this.originalBitReservoir = bitString;
 };
 
 ExpGolombDecoder.prototype.countLeadingZeros = function () {

@@ -33,7 +33,7 @@ export const bitStringToTypedArray = (bitString) => {
 };
 
 export const removeRBSPTrailingBits = (bits) => {
-  return bits.split(/10+$/)[0];
+  return bits.split(/10*$/)[0];
 };
 
 export const appendRBSPTrailingBits = (bits) => {
