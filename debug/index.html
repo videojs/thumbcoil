@@ -21,28 +21,32 @@
       padding-top: 5px;
       padding-bottom: 5px;
     }
-    mp4-box[type='ftyp']>mp4-box-type,
-    mp4-box[type='access_unit_delimiter_rbsp']>mp4-box-type {
-      background-color: rgba(128,96,64,1);
-    }
-    mp4-box[type='moov']>mp4-box-type,
-    mp4-box[type='slice_layer_without_partitioning_rbsp_idr']>mp4-box-type {
-      background-color: rgba(128,64,96,1);
-    }
-    mp4-box[type='moof']>mp4-box-type,
-    mp4-box[type='slice_layer_without_partitioning_rbsp']>mp4-box-type {
-      background-color: rgba(64,128,96,1);
-    }
-    mp4-box[type='mdat']>mp4-box-type,
-    mp4-box[type='seq_parameter_set_rbsp']>mp4-box-type,
-    mp4-box[type='pic_parameter_set_rbsp']>mp4-box-type {
-      background-color: rgba(64,96,128,1);
-    }
     mp4-box-type {
       background-color: rgba(96,96,96,1);
       color: #eee;
       display: block;
       padding: 5px;
+    }
+    mp4-box[data-type='ftyp']>mp4-box-type,
+    mp4-box[data-type='access_unit_delimiter_rbsp']>mp4-box-type {
+      background-color: rgba(128,96,64,1);
+    }
+    mp4-box[data-type='moov']>mp4-box-type,
+    mp4-box[data-type='slice_layer_without_partitioning_rbsp_idr']>mp4-box-type,
+    mp4-box[data-type='video']>mp4-box-type {
+      background-color: rgba(128,64,96,1);
+    }
+    mp4-box[data-type='moof']>mp4-box-type,
+    mp4-box[data-type='slice_layer_without_partitioning_rbsp']>mp4-box-type,
+    mp4-box[data-type='audio']>mp4-box-type {
+      background-color: rgba(64,128,96,1);
+    }
+    mp4-box[data-type='mdat']>mp4-box-type,
+    mp4-box[data-type='seq_parameter_set_rbsp']>mp4-box-type,
+    mp4-box[data-type='pic_parameter_set_rbsp']>mp4-box-type,
+    mp4-box[data-type='pat']>mp4-box-type,
+    mp4-box[data-type='pmt']>mp4-box-type {
+      background-color: rgba(64,96,128,1);
     }
     mp4-boxes {
       display: block;
@@ -54,6 +58,7 @@
       display: table-row;
     }
     mp4-name, mp4-value {
+      font-family: monospace;
       display: table-cell;
       padding: 5px;
     }
@@ -66,6 +71,9 @@
     mp4-box-type.collapsed ~ mp4-boxes,
     mp4-box-type.collapsed ~ mp4-properties {
       display: none;
+    }
+    .pre-like {
+      white-space: pre;
     }
   </style>
 </head>
@@ -140,12 +148,8 @@
 
         // clear old box info
         workingBoxes.innerHTML = '';
-
-        if (!(workingParsed instanceof HTMLElement)) {
-          workingBoxes.appendChild(thumbcoil[fileTypeInspector].domify(workingParsed));
-        } else {
-          workingBoxes.appendChild(workingParsed);
-        }
+        console.log(workingParsed);
+        workingBoxes.appendChild(thumbcoil[fileTypeInspector].domify(workingParsed));
       });
       reader.readAsArrayBuffer(this.files[0]);
     }, false);

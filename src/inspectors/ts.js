@@ -11,6 +11,7 @@
 'use strict';
 
 import {nalParseAnnexB} from './common/nal-parse';
+import dataToHex from './common/data-to-hex.js';
 
 // constants
 var
@@ -49,7 +50,7 @@ const parseTransportStream = function(bytes) {
       // We found a packet so emit it and jump one whole packet forward in
       // the stream
       packets.push({
-        type: 'ts-packet',
+        type: 'transportstream-packet',
         data: bytes.subarray(startIndex, endIndex)
       });
       startIndex += MP2T_PACKET_LENGTH;
@@ -68,7 +69,7 @@ const parseTransportStream = function(bytes) {
       // We found a final packet so emit it and jump one whole packet forward in
       // the stream
       packets.push({
-        type: 'ts-packet',
+        type: 'transportstream-packet',
         data: bytes.subarray(startIndex, endIndex)
       });
       startIndex += MP2T_PACKET_LENGTH;
@@ -84,7 +85,7 @@ const parseTransportStream = function(bytes) {
     });
   }
 
-  return packets;
+  return parseTransportStreamPackets(packets);
 };
 
 /**
@@ -92,13 +93,33 @@ const parseTransportStream = function(bytes) {
  * forms of the individual transport stream packets.
  */
 const parseTransportStreamPackets = function(packets) {
-  var packetsWaitingForPmt = [];
-  var results = [];
-  var programMapTable = undefined;
-  var pmtPid = null;
+  let packetsPendingPmt = [];
+  let packetsPendingPmtPid = [];
+  let programMapTable = null;
+  let pmtPid = null;
 
-  const parsePsi = function(payload, psi) {
+  const processPmtOrPes = function (packet) {
+    if (packet.pid === pmtPid) {
+      packet.content.type = 'pmt';
+      parsePsi(packet);
+    } else if (programMapTable === null) {
+      // When we have not seen a PMT yet, defer further processing of
+      // PES packets until one has been parsed
+      packetsPendingPmt.push(packet);
+    } else {
+      processPes(packet);
+    }
+  };
+
+  const processPes = function(packet) {
+    packet.content.streamType = programMapTable[packet.pid];
+    packet.content.type = 'pes';
+  };
+
+  const parsePsi = function(packet) {
     var offset = 0;
+    var psi = packet.content;
+    var payload = psi.data;
 
     // PSI packets may be split into multiple sections and those
     // sections may be split into multiple packets. If a PSI
@@ -106,24 +127,34 @@ const parseTransportStreamPackets = function(packets) {
     // will be true and the first byte of the payload will indicate
     // the offset from the current position to the start of the
     // section.
-    if (psi.payloadUnitStartIndicator) {
-      offset += payload[offset] + 1;
+    if (packet.payloadUnitStartIndicator) {
+      offset += payload[0] + 1;
     }
 
+    psi.data = payload.subarray(offset);
+
     if (psi.type === 'pat') {
-      parsePat(payload.subarray(offset), psi);
+      parsePat(packet);
     } else {
-      parsePmt(payload.subarray(offset), psi);
+      parsePmt(packet);
     }
   };
 
-  const parsePat = function(payload, pat) {
-    pat.section_number = payload[7]; // eslint-disable-line camelcase
-    pat.last_section_number = payload[8]; // eslint-disable-line camelcase
+  const parsePat = function(packet) {
+    let pat = packet.content;
+    let payload = pat.data;
+
+    pat.sectionNumber = payload[7]; // eslint-disable-line camelcase
+    pat.lastSectionNumber = payload[8]; // eslint-disable-line camelcase
 
     // skip the PSI header and parse the first PMT entry
     pmtPid = (payload[10] & 0x1F) << 8 | payload[11];
     pat.pmtPid = pmtPid;
+
+    // if there are any packets waiting for a PMT PID to be found, process them now
+    while (packetsPendingPmtPid.length) {
+      processPmtOrPes(packetsPendingPmtPid.shift());
+    }
   };
 
   /**
@@ -134,7 +165,10 @@ const parseTransportStreamPackets = function(packets) {
    * @param pmt {object} the object that should be decorated with
    * fields parsed from the PMT.
    */
-  const parsePmt = function(payload, pmt) {
+  const parsePmt = function(packet) {
+    let pmt = packet.content;
+    let payload = pmt.data;
+
     var sectionLength, tableEnd, programInfoLength, offset;
 
     // PMTs can be sent ahead of the time when they should actually
@@ -172,8 +206,8 @@ const parseTransportStreamPackets = function(packets) {
     pmt.programMapTable = programMapTable;
 
     // if there are any packets waiting for a PMT to be found, process them now
-    while (packetsWaitingForPmt.length) {
-      processPes.apply(null, packetsWaitingForPmt.shift());
+    while (packetsPendingPmt.length) {
+      processPes(packetsPendingPmt.shift());
     }
   };
 
@@ -181,61 +215,55 @@ const parseTransportStreamPackets = function(packets) {
    * Deliver a new MP2T packet to the stream.
    */
   const parsePacket = function(packet) {
-    var
-      result = {},
-      offset = 4;
+    let offset = 4;
+    let payload = packet.data;
+    let content = {};
 
-    result.payloadUnitStartIndicator = !!(packet[1] & 0x40);
+    packet.payloadUnitStartIndicator = !!(payload[1] & 0x40);
 
     // pid is a 13-bit field starting at the last bit of packet[1]
-    result.pid = packet[1] & 0x1f;
-    result.pid <<= 8;
-    result.pid |= packet[2];
+    packet.pid = payload[1] & 0x1f;
+    packet.pid <<= 8;
+    packet.pid |= payload[2];
+    packet.content = content;
 
     // if an adaption field is present, its length is specified by the
     // fifth byte of the TS packet header. The adaptation field is
     // used to add stuffing to PES packets that don't fill a complete
     // TS packet, and to specify some forms of timing and control data
     // that we do not currently use.
-    if (((packet[3] & 0x30) >>> 4) > 0x01) {
-      offset += packet[offset] + 1;
+    if (((payload[3] & 0x30) >>> 4) > 0x01) {
+      offset += payload[offset] + 1;
     }
+
+    content.data = payload.subarray(offset);
 
     // parse the rest of the packet based on the type
-    if (result.pid === 0) {
-      result.type = 'pat';
-      parsePsi(packet.subarray(offset), result);
-      results.push(result);
-    } else if (result.pid === pmtPid) {
-      result.type = 'pmt';
-      parsePsi(packet.subarray(offset), result);
-      results.push(result);
-    } else if (programMapTable === undefined) {
-      // When we have not seen a PMT yet, defer further processing of
-      // PES packets until one has been parsed
-      packetsWaitingForPmt.push([packet, offset, result]);
-    } else {
-      processPes(packet, offset, result);
+    if (packet.pid === 0) {
+      content.type = 'pat';
+      parsePsi(packet);
+      return packet;
     }
+
+    if (pmtPid === null) {
+      packetsPendingPmtPid.push(packet);
+      return packet;
+    }
+
+    return processPmtOrPes(packet);
   };
 
-  const processPes = function(packet, offset, result) {
-    result.streamType = programMapTable[result.pid];
-    result.type = 'pes';
-    result.data = packet.subarray(offset);
+  packets
+    .filter((packet) => packet.type === 'transportstream-packet')
+    .forEach((packet) => {
+      if (packet.type === 'transportstream-packet') {
+        parsePacket(packet);
+      } else {
+        packet.content = {};
+      }
+    });
 
-    results.push(result);
-  };
-
-  packets.forEach((packet) => {
-    if (packet.type === 'ts-packet') {
-      parsePacket(packet.data);
-    } else {
-      results.push(packet);
-    }
-  });
-
-  return results;
+  return packets;
 };
 
 /**
@@ -252,14 +280,17 @@ const parsePesPackets = function(packets) {
     // PES packet fragments
     video = {
       data: [],
+      tsPacketIndices: [],
       size: 0
     },
     audio = {
       data: [],
+      tsPacketIndices: [],
       size: 0
     },
     timedMetadata = {
       data: [],
+      tsPacketIndices: [],
       size: 0
     },
     parsePes = function(payload, pes) {
@@ -321,8 +352,9 @@ const parsePesPackets = function(packets) {
       if (!stream.data.length) {
         return;
       }
-      event.pid = stream.data[0].pid;
+      event.pid = stream.pid;
       event.packetCount = stream.data.length;
+      event.tsPacketIndices = stream.tsPacketIndices;
       // reassemble the packet
       while (stream.data.length) {
         fragment = stream.data.shift();
@@ -335,25 +367,31 @@ const parsePesPackets = function(packets) {
       parsePes(packetData, event);
 
       stream.size = 0;
+      stream.tsPacketIndices = [];
 
       completeEs.push(event);
     };
 
   const packetTypes = {
-    pat: function(data) {
+    pat: function(packet, packetIndex) {
+      let pat = packet.content;
       completeEs.push({
-        pid: data.pid,
+        pid: packet.pid,
         type: 'pat',
         packetCount: 1,
-        sectionNumber: data.section_number,
-        lastSectionNumber: data.last_section_number,
-        pmtPid: data.pmtPid
+        sectionNumber: pat.sectionNumber,
+        lastSectionNumber: pat.lastSectionNumber,
+        tsPacketIndices: [packetIndex],
+        pmtPid: pat.pmtPid,
+        data: pat.data
       });
     },
-    pes: function(data) {
-      var stream, streamType;
+    pes: function(packet, packetIndex) {
+      let stream;
+      let streamType;
+      let pes = packet.content;
 
-      switch (data.streamType) {
+      switch (pes.streamType) {
       case STREAM_TYPES.h264:
         stream = video;
         streamType = 'video';
@@ -373,26 +411,30 @@ const parsePesPackets = function(packets) {
 
       // if a new packet is starting, we can flush the completed
       // packet
-      if (data.payloadUnitStartIndicator) {
+      if (packet.payloadUnitStartIndicator) {
         flushStream(stream, streamType);
       }
-      stream.pid = data.pid;
+
+      stream.pid = packet.pid;
+      stream.tsPacketIndices.push(packetIndex);
       // buffer this fragment until we are sure we've received the
       // complete payload
-      stream.data.push(data);
-      stream.size += data.data.byteLength;
+      stream.data.push(pes);
+      stream.size += pes.data.byteLength;
     },
-    pmt: function(data) {
-      var
-        event = {
-          pid: data.pid,
-          type: 'pmt',
-          tracks: [],
-          packetCount: 1
-        },
-        programMapTable = data.programMapTable,
-        k,
-        track;
+    pmt: function(packet, packetIndex) {
+      let pmt = packet.content;
+      let programMapTable = pmt.programMapTable;
+      let event = {
+        pid: packet.pid,
+        type: 'pmt',
+        tracks: [],
+        tsPacketIndices: [packetIndex],
+        packetCount: 1,
+        data: pmt.data
+      };
+      let k;
+      let track;
 
       // translate streams to tracks
       for (k in programMapTable) {
@@ -414,8 +456,20 @@ const parsePesPackets = function(packets) {
     }
   };
 
-  packets.forEach((packet) => {
-    packetTypes[packet.type](packet);
+  const parsePacket = function (packet, packetIndex) {
+    switch (packet.content.type) {
+      case 'pat':
+      case 'pmt':
+      case 'pes':
+        packetTypes[packet.content.type](packet, packetIndex);
+        break;
+      default:
+        break;
+    }
+  };
+
+  packets.forEach((packet, packetIndex) => {
+    parsePacket(packet, packetIndex);
   });
 
   flushStream(video, 'video');
@@ -425,53 +479,35 @@ const parsePesPackets = function(packets) {
   return completeEs;
 };
 
-const inspect = function (data) {
+const inspectTs = function (data) {
+  var object = {};
   var tsPackets = parseTransportStream(data);
-  var packets = parseTransportStreamPackets(tsPackets);
-  var table = makeTable(packets);
-  var pesPackets = parsePesPackets(packets);
+  var pesPackets = parsePesPackets(tsPackets);
 
-  addToTable(pesPackets, table);
+  object.tsMap = tsPackets;
+  object.esMap = pesPackets;
 
-  return table;
+  return object;
 };
 
-const makeTable = function (packets) {
-  var tableEl = document.createElement('table');
-  tableEl.setAttribute('border', '1');
-  tableEl.setAttribute('width', '100%');
-  // Generate table based on ts packets
-  packets.forEach((packet) => {
-    tableEl.appendChild(makeRow(packet));
-  });
+const domifyTs = function (object) {
+  let tsPackets = object.tsMap;
+  let pesPackets = object.esMap;
+  let container = document.createElement('div');
 
-  return tableEl;
+  parsePESPackets(pesPackets, container, 1);
+
+  return container;
 };
 
-const makeRow = function (packet) {
-  var rowEl = document.createElement('tr');
-  var rowHead = document.createElement('th');
-  rowHead.innerHTML = packet.type;
-  rowHead.setAttribute('type', packet.type);
-  rowEl.appendChild(rowHead);
-  return rowEl;
-};
-
-const addToTable = function (pesPackets, table) {
-  var rows = table.querySelectorAll('tr');
-  var currentRow = 0;
-
+const parsePESPackets = function (pesPackets, parent, depth) {
   pesPackets.forEach((packet) => {
-    var rowData = document.createElement('td');
-    domifyBox(packetToText(packet), rowData, 2);
-    rowData.setAttribute('type', packet.type);
-    rowData.setAttribute('rowspan', packet.packetCount);
-    rows[currentRow].appendChild(rowData);
-    currentRow += packet.packetCount;
+    var packetEl = document.createElement('div');
+    domifyBox(parseNals(packet), parent, depth + 1);
   });
 };
 
-const packetToText = function (packet) {
+const parseNals = function (packet) {
   if (packet.type === 'video') {
     packet.nals = nalParseAnnexB(packet.data);
   }
@@ -481,7 +517,7 @@ const packetToText = function (packet) {
 const domifyBox = function (box, parentNode, depth) {
   var isObject = (o) => Object.prototype.toString.call(o) === '[object Object]';
   var attributes = ['size', 'flags', 'type', 'version'];
-  var specialProperties = ['boxes', 'nals', 'samples', 'packetCount', 'data'];
+  var specialProperties = ['boxes', 'nals', 'samples', 'packetCount'];
   var objectProperties = Object.keys(box).filter((key) => {
     return isObject(box[key]) ||
       (Array.isArray(box[key]) && isObject(box[key][0]));
@@ -511,7 +547,7 @@ const domifyBox = function (box, parentNode, depth) {
 
   attributes.forEach((key) => {
     if (typeof box[key] !== 'undefined') {
-      boxNode.setAttribute(key, box[key]);
+      boxNode.setAttribute('data-' + key, box[key]);
     }
   });
 
@@ -549,10 +585,28 @@ const makeProperty = function (name, value, parentNode) {
   var valueNode = document.createElement('mp4-value');
   var propertyNode = document.createElement('mp4-property');
 
-  nameNode.setAttribute('name', name);
+  nameNode.setAttribute('data-name', name);
   nameNode.textContent = name;
-  valueNode.setAttribute('value', value);
-  valueNode.textContent = value;
+
+  if (value instanceof Uint8Array || value instanceof Uint32Array) {
+    let strValue = dataToHex(value, '');
+    let truncValue = strValue.slice(0, 1029); // 21 rows of 16 bytes
+
+    if (truncValue.length < strValue.length) {
+      truncValue += '<' + (value.byteLength - 336) + 'b remaining of ' + value.byteLength + 'b total>';
+    }
+
+    valueNode.setAttribute('data-value', truncValue.toUpperCase());
+    valueNode.innerHTML = truncValue;
+    valueNode.classList.add('pre-like');
+  } else if (Array.isArray(value)) {
+    let strValue = '[' + value.join(', ') + ']';
+    valueNode.setAttribute('data-value', strValue);
+    valueNode.textContent = strValue;
+  } else {
+    valueNode.setAttribute('data-value', value);
+    valueNode.textContent = value;
+  }
 
   propertyNode.appendChild(nameNode);
   propertyNode.appendChild(valueNode);
@@ -561,5 +615,6 @@ const makeProperty = function (name, value, parentNode) {
 };
 
 export default {
-  inspect
+  inspect: inspectTs,
+  domify: domifyTs
 };

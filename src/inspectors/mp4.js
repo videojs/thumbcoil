@@ -7,6 +7,7 @@ import {
 } from '../bit-streams/h264';
 
 import {nalParseAVCC, mergePS} from './common/nal-parse';
+import dataToHex from './common/data-to-hex.js';
 
   /**
    * Returns the string representation of an ASCII encoded four byte buffer.
@@ -787,19 +788,7 @@ const textifyMp4 = function (inspectedMp4, depth) {
 
         // print out raw bytes as hexademical
         if (value instanceof Uint8Array || value instanceof Uint32Array) {
-          var bytes = Array.prototype.slice.call(new Uint8Array(value.buffer, value.byteOffset, value.byteLength))
-              .map(function (byte) {
-                return ' ' + ('00' + byte.toString(16)).slice(-2);
-              }).join('').match(/.{1,24}/g);
-          if (!bytes) {
-            return prefix + '<>';
-          }
-          if (bytes.length === 1) {
-            return prefix + '<' + bytes.join('').slice(1) + '>';
-          }
-          return prefix + '<\n' + bytes.map(function (line) {
-            return indent + '  ' + line;
-          }).join('\n') + '\n' + indent + '  >';
+          return prefix + dataToHex(value, indent);
         }
 
         // stringify generic objects
@@ -876,7 +865,7 @@ const domifyBox = function (box, parentNode, depth) {
 
   attributes.forEach((key) => {
     if (typeof box[key] !== 'undefined') {
-      boxNode.setAttribute(key, box[key]);
+      boxNode.setAttribute('data-' + key, box[key]);
     }
   });
 
@@ -914,10 +903,28 @@ const makeProperty = function (name, value, parentNode) {
   var valueNode = document.createElement('mp4-value');
   var propertyNode = document.createElement('mp4-property');
 
-  nameNode.setAttribute('name', name);
+  nameNode.setAttribute('data-name', name);
   nameNode.textContent = name;
-  valueNode.setAttribute('value', value);
-  valueNode.textContent = value;
+
+  if (value instanceof Uint8Array || value instanceof Uint32Array) {
+    let strValue = dataToHex(value, '');
+    let truncValue = strValue.slice(0, 1029); // 21 rows of 16 bytes
+
+    if (truncValue.length < strValue.length) {
+      truncValue += '<' + (value.byteLength - 336) + 'b remaining of ' + value.byteLength + 'b total>';
+    }
+
+    valueNode.setAttribute('data-value', truncValue.toUpperCase());
+    valueNode.innerHTML = truncValue;
+    valueNode.classList.add('pre-like');
+  } else if (Array.isArray(value)) {
+    let strValue = '[' + value.join(', ') + ']';
+    valueNode.setAttribute('data-value', strValue);
+    valueNode.textContent = strValue;
+  } else {
+    valueNode.setAttribute('data-value', value);
+    valueNode.textContent = value;
+  }
 
   propertyNode.appendChild(nameNode);
   propertyNode.appendChild(valueNode);
