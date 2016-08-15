@@ -1,26 +1,22 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>videojs-thumb-coil Demo</title>
-  <link href="/node_modules/video.js/dist/video-js.css" rel="stylesheet">
+  <title>videojs-thumbcoil Demo</title>
+  <style type="text/css">
+    html, body {
+      height: 100%;
+      padding: 0;
+      margin: 0;
+      overflow:hidden;
+    }
+    iframe {
+      border:0;
+      padding:0;
+      margin:0;
+    }
+  </style>
 </head>
 <body>
-  <video id="videojs-thumb-coil-player" class="video-js vjs-default-skin" controls>
-    <source src="//vjs.zencdn.net/v/oceans.mp4" type='video/mp4'>
-    <source src="//vjs.zencdn.net/v/oceans.webm" type='video/webm'>
-  </video>
-  <ul>
-    <li><a href="/test/">Run unit tests in browser.</a></li>
-    <li><a href="/docs/api/">Read generated docs.</a></li>
-  </ul>
-  <script src="/node_modules/video.js/dist/video.js"></script>
-  <script src="/dist/videojs-thumb-coil.js"></script>
-  <script>
-    (function(window, videojs) {
-      var player = window.player = videojs('videojs-thumb-coil-player');
-      player.thumbCoil();
-    }(window, window.videojs));
-  </script>
+  <iframe src='debug/index.html' width="100%" height="100%"></iframe>
 </body>
 </html>

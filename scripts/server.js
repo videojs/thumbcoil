@@ -15,7 +15,7 @@ const nameify = (str) =>
   str.replace(/%s/g, pkg.name.split('/').reverse()[0]);
 
 const srces = {
-  js: 'src/plugin.js',
+  js: 'src/index.js',
   tests: glob.sync('test/**/*.test.js')
 };
 
@@ -36,7 +36,7 @@ const bundlers = {
       'browserify-versionify'
     ]
   }),
-
+/*
   tests: browserify({
     debug: true,
     entries: srces.tests,
@@ -45,8 +45,10 @@ const bundlers = {
       'browserify-shim',
       'browserify-versionify'
     ]
-  })
+  })*/
 };
+
+const bundleAll = (names) => names.map((name) => bundle(name));
 
 const bundle = (name) => {
   return new Promise((resolve, reject) => {
@@ -61,7 +63,7 @@ const bundle = (name) => {
 mkdirp.sync('dist');
 
 // Start the server _after_ the initial bundling is done.
-Promise.all([bundle('js'), bundle('tests')]).then(() => {
+Promise.all(bundleAll(Object.keys(bundlers))).then(() => {
   const server = budo({
     port: 9999,
     stream: process.stdout
@@ -84,7 +86,7 @@ Promise.all([bundle('js'), bundle('tests')]).then(() => {
      */
     '^src/.+\.js$'(event, file) {
       console.log('re-bundling javascript and tests');
-      Promise.all([bundle('js'), bundle('tests')]).then(() => server.reload());
+      Promise.all(bundleAll(Object.keys(bundlers))).then(() => server.reload());
     },
 
     /**
@@ -93,10 +95,10 @@ Promise.all([bundle('js'), bundle('tests')]).then(() => {
      * @param  {String} event
      * @param  {String} file
      */
-    '^test/.+\.test\.js$'(event, file) {
+   /* '^test/.+\.test\.js$'(event, file) {
       console.log('re-bundling tests');
       bundle('tests').then(() => server.reload());
-    }
+    }*/
   };
 
   /**
