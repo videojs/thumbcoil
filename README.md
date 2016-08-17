@@ -20,7 +20,7 @@ npm install --save thumbcoil
 
 ## License
 
-Apache-2.0. Copyright (c) Jon-Carlos Rivera
+Apache-2.0. Copyright (c) Brightcove, Inc.
 
 
 [videojs]: http://videojs.com/

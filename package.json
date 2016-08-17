@@ -1,5 +1,5 @@
 {
-  "name": "thumb-coil",
+  "name": "thumbcoil",
   "version": "1.0.0",
   "description": "Tools for inspecting MPEG2TS and MP4 files and the codec bitstreams therein",
   "main": "es5/index.js",
@@ -28,7 +28,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/imbcmdth/thumb-coil.git"
+    "url": "git+https://github.com/videojs/thumbcoil.git"
   },
   "author" : "Brightcove, Inc.",
   "contributors": [
@@ -40,9 +40,9 @@
   ],
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/imbcmdth/thumb-coil/issues"
+    "url": "https://github.com/videojs/thumbcoil/issues"
   },
-  "homepage": "https://github.com/imbcmdth/thumb-coil#readme",
+  "homepage": "https://github.com/videojs/thumbcoil#readme",
   "keywords": [
   ],
   "browserify": {
