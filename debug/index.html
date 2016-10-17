@@ -156,8 +156,8 @@
   </script>
   <script>
     document.body.addEventListener('click', function (e) {
-      if (e.srcElement.tagName === 'MP4-BOX-TYPE') {
-        e.srcElement.classList.toggle('collapsed');
+      if (e.target.tagName === 'MP4-BOX-TYPE') {
+        e.target.classList.toggle('collapsed');
       }
     });
   </script>
