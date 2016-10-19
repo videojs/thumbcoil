@@ -1,11 +1,12 @@
 import h264Codecs from './bit-streams/h264';
 
-import {tsInspector, mp4Inspector} from './inspectors';
+import {tsInspector, mp4Inspector, flvInspector} from './inspectors';
 
 const thumbCoil = {
   h264Codecs,
   mp4Inspector,
-  tsInspector
+  tsInspector,
+  flvInspector
 };
 
 // Include the version number.

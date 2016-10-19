@@ -62,6 +62,8 @@
   },
   "files": [
     "CONTRIBUTING.md",
+    "index.html",
+    "debug/",
     "dist/",
     "docs/",
     "es5/",

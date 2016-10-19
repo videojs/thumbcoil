@@ -80,7 +80,10 @@
 <body>
   <div class="header-container">
     <header class="wrapper clearfix">
-      <h1 class="title">Video Inspector</h1>
+      <h1 class="title">Thumbcoil</h1>
+    </header>
+    <header class="wrapper clearfix">
+      <h3 class="title">A web-based video inspector</h3>
     </header>
   </div>
 
@@ -114,12 +117,6 @@
     </div> <!-- #main -->
   </div> <!-- #main-container -->
 
-  <div class="footer-container">
-    <footer class="wrapper">
-      <h3>footer</h3>
-    </footer>
-  </div>
-
   <script src="../dist/thumbcoil.js"></script>
 
   <script>
@@ -140,6 +137,8 @@
 
       if (/\.ts$/i.test(this.files[0].name)) {
         fileTypeInspector = 'tsInspector';
+      } else  if (/\.flv$/i.test(this.files[0].name)) {
+        fileTypeInspector = 'flvInspector';
       }
 
       reader.addEventListener('loadend', function() {
@@ -149,7 +148,9 @@
         // clear old box info
         workingBoxes.innerHTML = '';
         console.log(workingParsed);
-        workingBoxes.appendChild(thumbcoil[fileTypeInspector].domify(workingParsed));
+        if (thumbcoil[fileTypeInspector].domify) {
+          workingBoxes.appendChild(thumbcoil[fileTypeInspector].domify(workingParsed));
+        }
       });
       reader.readAsArrayBuffer(this.files[0]);
     }, false);

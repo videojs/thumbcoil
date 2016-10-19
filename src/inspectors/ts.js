@@ -1,23 +1,11 @@
-/**
- * mux.js
- *
- * Copyright (c) 2015 Brightcove
- * All rights reserved.
- *
- * A stream-based mp2t to mp4 converter. This utility can be used to
- * deliver mp4s to a SourceBuffer on platforms that support native
- * Media Source Extensions.
- */
 'use strict';
 
 import {nalParseAnnexB} from './common/nal-parse';
 import dataToHex from './common/data-to-hex.js';
 
 // constants
-var
-  MP2T_PACKET_LENGTH = 188, // bytes
-  SYNC_BYTE = 0x47;
-
+const MP2T_PACKET_LENGTH = 188; // in bytes
+const SYNC_BYTE = 0x47;
 const STREAM_TYPES  = {
   h264: 0x1b,
   adts: 0x0f,
