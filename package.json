@@ -1,6 +1,6 @@
 {
   "name": "thumbcoil",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Tools for inspecting MPEG2TS and MP4 files and the codec bitstreams therein",
   "main": "es5/index.js",
   "scripts": {
@@ -30,7 +30,7 @@
     "type": "git",
     "url": "git+https://github.com/videojs/thumbcoil.git"
   },
-  "author" : "Brightcove, Inc.",
+  "author": "Brightcove, Inc.",
   "contributors": [
     {
       "name": "Jon-Carlos Rivera",
@@ -43,16 +43,14 @@
     "url": "https://github.com/videojs/thumbcoil/issues"
   },
   "homepage": "https://github.com/videojs/thumbcoil#readme",
-  "keywords": [
-  ],
+  "keywords": [],
   "browserify": {
     "transform": [
       "browserify-shim",
       "browserify-versionify"
     ]
   },
-  "browserify-shim": {
-  },
+  "browserify-shim": {},
   "vjsstandard": {
     "ignore": [
       "dist",
