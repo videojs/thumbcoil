@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: bit-streams/h264/lib/combinators.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: bit-streams/h264/lib/combinators.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>'use strict';
+
+import {ExpGolombEncoder, ExpGolombDecoder} from './exp-golomb-string';
+import {
+  typedArrayToBitString,
+  bitStringToTypedArray,
+  removeRBSPTrailingBits,
+  appendRBSPTrailingBits
+} from './rbsp-utils';
+
+/**
+ * General ExpGolomb-Encoded-Structure Parse Functions
+ */
+export const start = function (name, parseFn) {
+  return {
+    decode: (input, options) => {
+      let rawBitString = typedArrayToBitString(input);
+      let bitString = removeRBSPTrailingBits(rawBitString);
+      let expGolombDecoder = new ExpGolombDecoder(bitString);
+      let output = {};
+
+      options = options || {};
+
+      return parseFn.decode(expGolombDecoder, output, options);
+    },
+    encode: (input, options) => {
+      let expGolombEncoder = new ExpGolombEncoder();
+
+      options = options || {};
+
+      parseFn.encode(expGolombEncoder, input, options);
+
+      let output = expGolombEncoder.bitReservoir;
+      let bitString = appendRBSPTrailingBits(output);
+      let data = bitStringToTypedArray(bitString);
+
+      return data;
+    }
+  };
+};
+
+export const list = function (parseFns) {
+  return {
+    decode: (expGolomb, output, options, index) => {
+      parseFns.forEach((fn) => {
+        output = fn.decode(expGolomb, output, options, index) || output;
+      });
+
+      return output;
+    },
+    encode: (expGolomb, input, options, index) => {
+      parseFns.forEach((fn) => {
+        fn.encode(expGolomb, input, options, index);
+      });
+    }
+  };
+};
+
+export const data = function (name, dataType) {
+  let nameSplit = name.split(/\[(\d*)\]/);
+  let property = nameSplit[0];
+  let indexOverride;
+  let nameArray;
+
+  // The `nameSplit` array can either be 1 or 3 long
+  if (nameSplit &amp;&amp; nameSplit[0] !== '') {
+    if (nameSplit.length > 1) {
+      nameArray = true;
+      indexOverride = parseFloat(nameSplit[1]);
+
+      if (isNaN(indexOverride)) {
+        indexOverride = undefined;
+      }
+    }
+  } else {
+    throw new Error('ExpGolombError: Invalid name "' + name + '".');
+  }
+
+  return {
+    name: name,
+    decode: (expGolomb, output, options, index) => {
+      let value;
+
+      if (typeof indexOverride === 'number') {
+        index = indexOverride;
+      }
+
+      value = dataType.read(expGolomb, output, options, index);
+
+      if (!nameArray) {
+        output[property] = value;
+      } else {
+        if (!Array.isArray(output[property])) {
+          output[property] = [];
+        }
+
+        if (index !== undefined) {
+          output[property][index] = value;
+        } else {
+          output[property].push(value);
+        }
+      }
+
+      return output;
+    },
+    encode: (expGolomb, input, options, index) => {
+      let value;
+
+      if (typeof indexOverride === 'number') {
+        index = indexOverride;
+      }
+
+      if (!nameArray) {
+        value = input[property];
+      } else if (Array.isArray(output[property])) {
+        if (index !== undefined) {
+          value = input[property][index];
+        } else {
+          value = input[property].shift();
+        }
+      }
+
+      if (typeof value !== 'number') {
+        return;
+      }
+
+      value = dataType.write(expGolomb, input, options, index, value);
+    }
+  };
+};
+
+export const debug = function (prefix) {
+  return {
+    decode: (expGolomb, output, options, index) => {
+      console.log(prefix, expGolomb.bitReservoir, output, options, index);
+    },
+    encode: (expGolomb, input, options, index) => {
+      console.log(prefix, expGolomb.bitReservoir, input, options, index);
+    }
+  };
+};
+
+export const verify = function (name) {
+  return {
+    decode: (expGolomb, output, options, index) => {
+      let len = expGolomb.bitReservoir.length;
+      if (len !== 0) {
+        console.trace('ERROR: ' + name + ' was not completely parsed. There were (' + len + ') bits remaining!');
+        console.log(expGolomb.originalBitReservoir);
+      }
+    },
+    encode: (expGolomb, input, options, index) => {}
+  };
+};
+
+export const pickOptions = function (property, value) {
+  return {
+    decode: (expGolomb, output, options, index) => {
+      if (typeof options[property] !== undefined) {
+   //     options[property][value];
+      }
+    },
+    encode: (expGolomb, input, options, index) => {
+      if (typeof options[property] !== undefined) {
+     //   options.values options[property][value];
+      }
+    }
+  };
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#frameNumBits">frameNumBits</a></li><li><a href="global.html#inspectMp4">inspectMp4</a></li><li><a href="global.html#parsePesPackets">parsePesPackets</a></li><li><a href="global.html#parseTransportStream">parseTransportStream</a></li><li><a href="global.html#parseTransportStreamPackets">parseTransportStreamPackets</a></li><li><a href="global.html#parseType">parseType</a></li><li><a href="global.html#spsCodec">spsCodec</a></li><li><a href="global.html#start">start</a></li><li><a href="global.html#textifyMp4">textifyMp4</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.2</a> on Wed Oct 19 2016 14:31:22 GMT-0400 (EDT)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
