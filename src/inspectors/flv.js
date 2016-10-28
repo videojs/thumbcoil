@@ -36,11 +36,9 @@ var
     obj.avcPacketType = avcPacketTypes[tag[0]];
     obj.CompositionTime = (tag[1] & parseInt('10000000', 2)) ? -compositionTime : compositionTime;
 
-    if (tag[0] === 1) {
-      obj.nals = nalParseAVCC(tag.subarray(4));
-      obj.nalUnitTypeRaw = hexStringList(tag.subarray(4, 100));
-    } else {
-      obj.data = hexStringList(tag.subarray(4));
+    obj.data = tag.subarray(4);
+    if (tag[0] === 0) {
+      obj.type = 'video-metadata';
     }
 
     return obj;
@@ -76,7 +74,7 @@ var
     obj = obj || {};
 
     obj.aacPacketType = packetTypes[tag[0]];
-    obj.data = hexStringList(tag.subarray(1));
+    obj.data = tag.subarray(1);
 
     return obj;
   },
@@ -120,7 +118,7 @@ var
   },
   parseGenericTag = function(tag) {
     return {
-      tagType: tagTypes[tag[0]],
+      type: tagTypes[tag[0]],
       dataSize: (tag[1] << 16) | (tag[2] << 8) | tag[3],
       timestamp: (tag[7] << 24) | (tag[4] << 16) | (tag[5] << 8) | tag[6],
       streamID: (tag[8] << 16) | (tag[9] << 8) | tag[10]
@@ -160,7 +158,129 @@ var
     return parsedResults;
   };
 
+const domifyFlv = function (flvTags) {
+  let container = document.createElement('div');
+
+  parsePESPackets(flvTags, container, 1);
+
+  return container;
+};
+
+const parsePESPackets = function (pesPackets, parent, depth) {
+  pesPackets.forEach((packet) => {
+    var packetEl = document.createElement('div');
+    domifyBox(parseNals(packet), parent, depth + 1);
+  });
+};
+
+const parseNals = function (packet) {
+  if (packet.type === 'video') {
+    packet.nals = nalParseAVCC(packet.data);
+  }
+  return packet;
+};
+
+const domifyBox = function (box, parentNode, depth) {
+  var isObject = (o) => Object.prototype.toString.call(o) === '[object Object]';
+  var attributes = ['size', 'flags', 'type', 'version'];
+  var specialProperties = ['boxes', 'nals', 'samples', 'packetCount'];
+  var objectProperties = Object.keys(box).filter((key) => {
+    return isObject(box[key]) ||
+      (Array.isArray(box[key]) && isObject(box[key][0]));
+  });
+  var propertyExclusions =
+    attributes
+      .concat(specialProperties)
+      .concat(objectProperties);
+  var subProperties = Object.keys(box).filter((key) => {
+    return propertyExclusions.indexOf(key) === -1;
+  });
+
+  var boxNode = document.createElement('mp4-box');
+  var propertyNode = document.createElement('mp4-properties');
+  var subBoxesNode = document.createElement('mp4-boxes');
+  var boxTypeNode = document.createElement('mp4-box-type');
+
+  if (box.type) {
+    boxTypeNode.textContent = box.type;
+
+    if (depth > 1) {
+      boxTypeNode.classList.add('collapsed');
+    }
+
+    boxNode.appendChild(boxTypeNode);
+  }
+
+  attributes.forEach((key) => {
+    if (typeof box[key] !== 'undefined') {
+      boxNode.setAttribute('data-' + key, box[key]);
+    }
+  });
+
+  if (subProperties.length) {
+    subProperties.forEach((key) => {
+      makeProperty(key, box[key], propertyNode);
+    });
+    boxNode.appendChild(propertyNode);
+  }
+
+  if (box.boxes && box.boxes.length) {
+    box.boxes.forEach((subBox) => domifyBox(subBox, subBoxesNode, depth + 1));
+    boxNode.appendChild(subBoxesNode);
+  } else if (objectProperties.length) {
+    objectProperties.forEach((key) => {
+      if (Array.isArray(box[key])) {
+        domifyBox({
+          type: key,
+          boxes: box[key]
+        },
+        subBoxesNode,
+        depth + 1);
+      } else {
+        domifyBox(box[key], subBoxesNode, depth + 1);
+      }
+    });
+    boxNode.appendChild(subBoxesNode);
+  }
+
+  parentNode.appendChild(boxNode);
+};
+
+const makeProperty = function (name, value, parentNode) {
+  var nameNode = document.createElement('mp4-name');
+  var valueNode = document.createElement('mp4-value');
+  var propertyNode = document.createElement('mp4-property');
+
+  nameNode.setAttribute('data-name', name);
+  nameNode.textContent = name;
+
+  if (value instanceof Uint8Array || value instanceof Uint32Array) {
+    let strValue = dataToHex(value, '');
+    let truncValue = strValue.slice(0, 1029); // 21 rows of 16 bytes
+
+    if (truncValue.length < strValue.length) {
+      truncValue += '<' + (value.byteLength - 336) + 'b remaining of ' + value.byteLength + 'b total>';
+    }
+
+    valueNode.setAttribute('data-value', truncValue.toUpperCase());
+    valueNode.innerHTML = truncValue;
+    valueNode.classList.add('pre-like');
+  } else if (Array.isArray(value)) {
+    let strValue = '[' + value.join(', ') + ']';
+    valueNode.setAttribute('data-value', strValue);
+    valueNode.textContent = strValue;
+  } else {
+    valueNode.setAttribute('data-value', value);
+    valueNode.textContent = value;
+  }
+
+  propertyNode.appendChild(nameNode);
+  propertyNode.appendChild(valueNode);
+
+  parentNode.appendChild(propertyNode);
+};
+
 export default {
   inspect: inspectFlv,
- // domify: domifyFlv
+  domify: domifyFlv
 };
