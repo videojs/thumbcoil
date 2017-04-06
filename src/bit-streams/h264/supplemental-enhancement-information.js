@@ -156,7 +156,7 @@ const seiPayloadCodecs = {
       each((index, output) => {
         return index < output.cc_count;
       },
-      newObj('cc_data_pkt[]',
+      newObj('cc_data_pkts[]',
         list([
           data('type', val('cc_data_pkt')),
           data('marker_bits', u(5)),
@@ -164,7 +164,8 @@ const seiPayloadCodecs = {
           data('cc_type', u(2)),
           data('cc_data_1', u(8)),
           data('cc_data_2', u(8)),
-        ])))
+        ]))),
+      data('marker_bits', u(8))
     ])
   },
   '5': {
