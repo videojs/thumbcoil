@@ -38,6 +38,11 @@ export const removeRBSPTrailingBits = (bits) => {
 
 export const appendRBSPTrailingBits = (bits) => {
   let bitString = bits + '10000000';
+  let sliceAmount = bitString.length % 8;
 
-  return bitString.slice(0, -(bitString.length % 8));
+  if (sliceAmount === 0) {
+    return bitString;
+  } else {
+    return bitString.slice(0, -sliceAmount);
+  }
 };

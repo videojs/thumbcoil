@@ -102,6 +102,37 @@ export const equals = function (name, value) {
   };
 };
 
+export const gt = function (name, value) {
+  let nameSplit = name.split(/\[(\d*)\]/);
+  let property = nameSplit[0];
+  let indexOverride;
+  let nameArray;
+
+  // The `nameSplit` array can either be 1 or 3 long
+  if (nameSplit && nameSplit[0] !== '') {
+    if (nameSplit.length > 1) {
+      nameArray = true;
+      indexOverride = parseFloat(nameSplit[1]);
+
+      if (isNaN(indexOverride)) {
+        indexOverride = undefined;
+      }
+    }
+  } else {
+    throw new Error('ExpGolombError: Invalid name "' + name + '".');
+  }
+
+  return (obj, options, index) => {
+    if (nameArray) {
+      return (obj[property] && obj[property][index] > value) ||
+        (options[property] && options[property][index] > value);
+    } else {
+      return obj[property] > value ||
+        options[property] > value;
+    }
+  };
+};
+
 export const not = function (fn) {
   return (obj, options, index) => {
     return !fn(obj, options, index);
@@ -130,6 +161,35 @@ export const whenMoreData = function (parseFn) {
     },
     encode: (expGolomb, input, options, index) => {
       parseFn.encode(expGolomb, input, options, index);
+    }
+  };
+};
+
+
+export const whileMoreData = function (parseFn) {
+  return {
+    decode: (expGolomb, output, options) => {
+      let index = 0;
+
+      while (expGolomb.bitReservoir.length) {
+        parseFn.decode(expGolomb, output, options, index);
+        index++;
+      }
+
+      return output;
+    },
+    encode: (expGolomb, input, options) => {
+      let index = 0;
+      let length = 0;
+
+      if (Array.isArray(input)) {
+        length = input.length;
+      }
+
+      while (index < length) {
+        parseFn.encode(expGolomb, input, options, index);
+        index++;
+      }
     }
   };
 };

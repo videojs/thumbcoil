@@ -18,7 +18,7 @@ const dataTypes = {
       write: (expGolomb, input, options, index, value) => {
         let bitsToWrite = getNumBits(numBits, expGolomb, input, options, index);
 
-        expGolomb.writeBits(value, bitsToWrite);
+        expGolomb.writeBits(bitsToWrite, value);
       }
     };
   },
@@ -32,7 +32,7 @@ const dataTypes = {
       write: (expGolomb, input, options, index, value) => {
         let bitsToWrite = getNumBits(numBits, expGolomb, input, options, index);
 
-        expGolomb.writeBits(value, bitsToWrite);
+        expGolomb.writeBits(bitsToWrite, value);
       }
     };
   },

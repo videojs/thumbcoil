@@ -3,7 +3,8 @@ import {
   picParameterSet,
   seqParameterSet,
   sliceLayerWithoutPartitioning,
-  accessUnitDelimiter
+  accessUnitDelimiter,
+  supplementalEnhancementInformation
 } from '../../bit-streams/h264';
 
 let lastSPS;
@@ -200,10 +201,10 @@ const nalParse = function (nalUnit) {
       nalObject.size = nalData.length;
       return nalObject;
     case 0x06:
-      return {
-        type: 'sei_rbsp',
-        size: nalData.length
-      };
+      nalObject = supplementalEnhancementInformation.decode(nalData, lastOptions);
+      nalObject.type = 'sei_message_rbsp';
+      nalObject.size = nalData.length;
+      return nalObject;
     case 0x07:
       lastSPS = seqParameterSet.decode(nalData);
       lastOptions = mergePS(lastPPS, lastSPS);

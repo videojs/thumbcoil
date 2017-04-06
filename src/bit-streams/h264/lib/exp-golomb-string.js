@@ -55,9 +55,16 @@ ExpGolombDecoder.prototype.readBits = function (bitCount) {
   return val;
 };
 
+ExpGolombDecoder.prototype.readRawBits = function (bitCount) {
+  let val = this.bitReservoir.slice(0, bitCount);
+
+  this.bitReservoir = this.bitReservoir.slice(bitCount);
+
+  return val;
+};
 
 ExpGolombDecoder.prototype.readUnsignedByte = function () {
-  return this.writeBits(8);
+  return this.readBits(8);
 };
 
 export const ExpGolombEncoder = function (bitString) {
@@ -96,6 +103,17 @@ ExpGolombEncoder.prototype.writeBits = function (bitWidth, value) {
   }
 
   this.bitReservoir += tempStr + bitValue;
+};
+
+ExpGolombEncoder.prototype.writeRawBits = function (bitWidth, value) {
+  let tempStr = '';
+  let numBits = bitWidth - value.length;
+
+  for (let i = 0; i < numBits; i++) {
+    tempStr += '0';
+  }
+
+  this.bitReservoir += tempStr + value;
 };
 
 ExpGolombEncoder.prototype.writeUnsignedByte = function (value) {
