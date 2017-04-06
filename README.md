@@ -9,6 +9,10 @@ Tools for inspecting MPEG2TS and MP4 files and the codec bitstreams therein
 ## Installation
 
 - [Installation](#installation)
+- [About](#about)
+- [Container Support](#container-support)
+- [Bitstream Support](#bitstream-support)
+  - [H.264](#h264)
 - [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -17,6 +21,46 @@ Tools for inspecting MPEG2TS and MP4 files and the codec bitstreams therein
 ```sh
 npm install --save thumbcoil
 ```
+
+## About
+
+Thumbcoil is a video inspector tool that can unpackage various media containers and inspect the bitstreams therein. Thumbcoil runs in your browser and your video data is never transmitted to a server.
+
+## Container Support
+
+Thumbcoil supports the following contain formats:
+
+* MPEG2-TS
+  * PAT
+  * PMT
+  * PES
+* fMP4 (some support for traditional non-fragmented MP4)
+  * Too many boxes to list!
+* FLV
+  * FLV Header
+  * Video Tag
+  * Audio Tag
+
+## Bitstream Support
+
+### H.264
+
+Thumbcoil supports the parsing of the following NAL units:
+
+* `access_unit_delimiter`
+* `sequence_paramter_set`
+  * Including `seq_scaling_list` and `vui_parameters`
+* `picture_parameter_set`
+  * Including `pic_scaling_list`
+* `slice_layer_without_partitioning`
+  * Only parses the `slice_header`
+* `slice_layer_without_partitioning_idr`
+  * Only parses the `slice_header`
+* `sei_message` - the following payload types
+  * `buffering_period`
+  * `pic_timing`
+  * `user_data_registered_itu_t_t35`
+  * `recovery_point`
 
 ## License
 
