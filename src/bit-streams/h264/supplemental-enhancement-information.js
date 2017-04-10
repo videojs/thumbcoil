@@ -1,14 +1,14 @@
 'use strict';
 
-import {ExpGolombDecoder, ExpGolombEncoder} from './lib/exp-golomb-string';
-import {start, startArray, list, data, debug, verify, newObj} from './lib/combinators';
-import {when, each, inArray, equals, some, every, not, whileMoreData, gt} from './lib/conditionals';
-import {ue, u, se, val} from './lib/data-types';
+import {ExpGolombDecoder, ExpGolombEncoder} from '../../lib/exp-golomb-string';
+import {start, startArray, list, data, debug, verify, newObj} from '../../lib/combinators';
+import {when, each, inArray, equals, some, every, not, whileMoreData, gt} from '../../lib/conditionals';
+import {ue, u, se, val} from '../../lib/data-types';
 import {
   typedArrayToBitString,
   bitStringToTypedArray,
   appendRBSPTrailingBits
-} from './lib/rbsp-utils';
+} from '../../lib/rbsp-utils';
 
 let v = null;
 

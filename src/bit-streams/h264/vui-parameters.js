@@ -1,8 +1,8 @@
 'use strict';
 
-import {start, list, data} from './lib/combinators';
-import {when, equals, some} from './lib/conditionals';
-import {ue, u, val} from './lib/data-types';
+import {start, list, data} from '../../lib/combinators';
+import {when, equals, some} from '../../lib/conditionals';
+import {ue, u, val} from '../../lib/data-types';
 
 import hdrParameters from './hdr-parameters';
 

@@ -1,6 +1,7 @@
 'use strict';
 
 import {nalParseAnnexB} from './common/nal-parse';
+import {parseAdts} from './common/aac-parse';
 import dataToHex from './common/data-to-hex.js';
 
 // constants
@@ -490,15 +491,27 @@ const domifyTs = function (object) {
 const parsePESPackets = function (pesPackets, parent, depth) {
   pesPackets.forEach((packet) => {
     var packetEl = document.createElement('div');
-    domifyBox(parseNals(packet), parent, depth + 1);
+    if (packet.type === 'video') {
+      domifyBox(parseNals(packet), parent, depth + 1);
+    } else if (packet.type === 'audio') {
+      domifyBox(parseAac(packet), parent, depth + 1);
+    } else {
+      domifyBox(packet, parent, depth + 1);
+    }
   });
 };
 
 const parseNals = function (packet) {
-  if (packet.type === 'video') {
-    packet.nals = nalParseAnnexB(packet.data);
-    packet.nals.size = packet.data.length;
-  }
+  packet.nals = nalParseAnnexB(packet.data);
+  packet.nals.size = packet.data.length;
+
+  return packet;
+};
+
+const parseAac = function (packet) {
+  packet.adts = parseAdts(packet);
+  packet.adts.ize = packet.data.length;
+
   return packet;
 };
 
