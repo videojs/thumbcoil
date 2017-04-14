@@ -41,7 +41,7 @@ Thumbcoil supports the following container formats:
 
 ### H.264
 
-Thumbcoil supports the parsing of the following NAL units:
+Thumbcoil supports the parsing *and writing* of the following NAL units:
 
 * `access_unit_delimiter`
 * `sequence_paramter_set`
@@ -57,6 +57,17 @@ Thumbcoil supports the parsing of the following NAL units:
   * `pic_timing`
   * `user_data_registered_itu_t_t35`
   * `recovery_point`
+
+### AAC
+
+Thumbcoil supports the parsing of the following AAC stream elements:
+
+* `single_channel_element`
+* `channel_pair_element`
+* `coupling_channel_element`
+* `lfe_channel_element`
+* `data_stream_element`
+* `program_config_element`
 
 ## License
 

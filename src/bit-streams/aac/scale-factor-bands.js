@@ -162,6 +162,7 @@ export const swb_offset_long_window = [
     144,
     160,
     176,
+    196,
     216,
     240,
     264,
@@ -186,7 +187,6 @@ export const swb_offset_long_window = [
     864,
     896,
     928,
-    196,
     1024
   ],
   [ // 44.1khz
@@ -214,6 +214,7 @@ export const swb_offset_long_window = [
     144,
     160,
     176,
+    196,
     216,
     240,
     264,
@@ -238,7 +239,6 @@ export const swb_offset_long_window = [
     864,
     896,
     928,
-    196,
     1024
   ],
   [ // 32khz

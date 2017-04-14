@@ -1,16 +1,20 @@
 import {ExpGolombDecoder, ExpGolombEncoder} from '../../lib/exp-golomb-string';
 import {start, startArray, list, data, debug, verify, newObj} from '../../lib/combinators';
 import {when, each, inArray, equals, some, every, not, whileMoreData, gt} from '../../lib/conditionals';
-import {ue, u, se, val} from '../../lib/data-types';
+import {ue, u, se, val, byteAlign} from '../../lib/data-types';
 import {
   typedArrayToBitString,
   bitStringToTypedArray,
   appendRBSPTrailingBits
 } from '../../lib/rbsp-utils';
 import {swb_offset_long_window, swb_offset_short_window} from './scale-factor-bands';
-import {readCodebookValue, scaleFactorCB, spectrumCB} from './codebooks-final';
+import {readCodebookValue, scaleFactorCB, spectrumCB} from './codebooks';
 
-const EIGHT_SHORT_SEQUENCE =2;
+const ONLY_LONG_SEQUENCE = 0;
+const LONG_START_SEQUENCE = 1;
+const EIGHT_SHORT_SEQUENCE = 2;
+const LONG_STOP_SEQUENCE = 3;
+
 const QUAD_LEN = 4;
 const PAIR_LEN = 2;
 const ZERO_HCB = 0;
@@ -21,22 +25,42 @@ const INTENSITY_HCB2 = 14;
 const INTENSITY_HCB = 15;
 const ESC_FLAG = 16;
 
-const elemTypes = [
-  'single_channel_element',
-  'channel_pair_element',
-  'coupling_channel_element',
-  'lfe_channel_element',
-  'data_stream_element',
-  'program_config_element',
-  'fill_element',
-  'end'
+const codebookInfo = [
+// [unsigned, tuples, LAV]
+  [null, null, 0], // ZERO_HCB
+  [0, 4, 1],
+  [0, 4, 1],
+  [1, 4, 2],
+  [1, 4, 2],
+  [0, 2, 4], // FIRST_PAIR_HCB
+  [0, 2, 4],
+  [1, 2, 7],
+  [1, 2, 7],
+  [1, 2, 12],
+  [1, 2, 12],
+  [1, 2, 16] // ESC_HCB
+];
+
+const PRED_SFB_MAX = [
+  33,
+  33,
+  38,
+  40,
+  40,
+  40,
+  41,
+  41,
+  37,
+  37,
+  37,
+  34
 ];
 
 const bit_set = function (val, bit) {
   return (1 << bit) & val;
 }
 
-const doPostIcsCalculation = {
+const doPostIcsInfoCalculation = {
   decode: (expGolomb, output, options, index) => {
     let fs_index = options.sampling_frequency_index;
 
@@ -102,15 +126,19 @@ const sectionData = {
     }
 
     let sect_esc_val = (1 << bits) - 1;
+    output.sect_cb = [];
+    output.sect_start = [];
+    output.sect_end = [];
+    output.sfb_cb = [];
+    output.num_sec = [];
     for (let g = 0; g < output.num_window_groups; g++) {
       let k = 0;
       let i = 0;
 
-      output.sect_cb = [[]];
-      output.sect_start = [[]];
-      output.sect_end = [[]];
-      output.num_sec = [];
-      output.sfb_cb = [[]];
+      output.sect_cb[g] = [];
+      output.sect_start[g] = [];
+      output.sect_end[g] = [];
+      output.sfb_cb[g] = [];
 
       while (k < output.max_sfb) {
         output.sect_cb[g][i] = expGolomb.readBits(4);
@@ -141,10 +169,12 @@ const sectionData = {
 
 const scaleFactorData = {
   decode: (expGolomb, output, options, index) => {
+    output.scale_factors =[];
+
     for (let g = 0; g < output.num_window_groups; g++) {
       for (let sfb = 0; sfb < output.max_sfb; sfb++) {
         if (output.sfb_cb[g][sfb] !== ZERO_HCB) {
-          readCodebookValue(scaleFactorCB, expGolomb);
+          output.scale_factors.push(readCodebookValue(scaleFactorCB, expGolomb));
         }
       }
     }
@@ -158,14 +188,19 @@ const tnsData = {
   decode: (expGolomb, output, options, index) => {
     output.n_filt = [];
     output.coef_res = [];
-    output.length = [[]];
-    output.order = [[]];
-    output.direction = [[]];
-    output.coef_compress = [[]];
-    output.coef = [[]];
+    output.length = [];
+    output.order = [];
+    output.direction = [];
+    output.coef_compress = [];
+    output.coef = [];
 
     for (let w = 0; w < output.num_windows; w++) {
       output.n_filt[w] = expGolomb.readBits(2);
+      output.length[w] = [];
+      output.order[w] = [];
+      output.direction[w] = [];
+      output.coef_compress[w] = [];
+      output.coef[w] = [];
 
       if (output.n_filt[w]) {
         output.coef_res[w] = expGolomb.readBits(1);
@@ -179,7 +214,7 @@ const tnsData = {
           output.coef_compress[w][filt] = expGolomb.readBits(1);
           output.coef[w][filt] = [];
           for (let i = 0; i < output.order[w][filt]; i++) {
-            output.coef[w][filt][i] = expGolomb.readBits(4);
+            output.coef[w][filt][i] = expGolomb.readBits(output.coef_res[w] + 3);
           }
         }
       }
@@ -191,19 +226,177 @@ const tnsData = {
   }
 };
 
+const gainControlData = {
+  decode: (expGolomb, output, options, index) =>{
+    output.max_band = expGolomb.readBits(2);
+    output.adjust_num = [];
+    output.alevcode = [];
+    output.aloccode = [];
+
+    if (output.window_sequence === ONLY_LONG_SEQUENCE) {
+      for (let bd = 1; bd <= output.max_band; bd++) {
+        output.adjust_num[bd] = [];
+        output.alevcode[bd] = [];
+        output.aloccode[bd] = [];
+        for (let wd = 0; wd < 1; wd++) {
+          output.adjust_num[bd][wd] = expGolomb.readBits(3);
+          output.alevcode[bd][wd] = [];
+          output.aloccode[bd][wd] = [];
+         for (let ad = 0; ad < output.adjust_num[bd][wd]; ad++) {
+            output.alevcode[bd][wd][ad] =  expGolomb.readBits(4);
+            output.aloccode[bd][wd][ad] =  expGolomb.readBits(5);
+          }
+        }
+      }
+    } else if (output.window_sequence === LONG_START_SEQUENCE) {
+      for (let bd = 1; bd <= output.max_band; bd++) {
+        output.adjust_num[bd] = [];
+        output.alevcode[bd] = [];
+        output.aloccode[bd] = [];
+        for (let wd = 0; wd < 2; wd++) {
+          output.adjust_num[bd][wd] = expGolomb.readBits(3);
+          output.alevcode[bd][wd] = [];
+          output.aloccode[bd][wd] = [];
+         for (let ad = 0; ad < output.adjust_num[bd][wd]; ad++) {
+            output.alevcode[bd][wd][ad] =  expGolomb.readBits(4);
+
+            if (wd === 0) {
+              output.aloccode[bd][wd][ad] =  expGolomb.readBits(4);
+            } else {
+              output.aloccode[bd][wd][ad] =  expGolomb.readBits(2);
+            }
+          }
+        }
+      }
+    } else if (output.window_sequence === EIGHT_SHORT_SEQUENCE) {
+      for (let bd = 1; bd <= output.max_band; bd++) {
+        output.adjust_num[bd] = [];
+        output.alevcode[bd] = [];
+        output.aloccode[bd] = [];
+        for (let wd = 0; wd < 8; wd++) {
+          output.adjust_num[bd][wd] = expGolomb.readBits(3);
+          output.alevcode[bd][wd] = [];
+          output.aloccode[bd][wd] = [];
+         for (let ad = 0; ad < output.adjust_num[bd][wd]; ad++) {
+            output.alevcode[bd][wd][ad] =  expGolomb.readBits(4);
+            output.aloccode[bd][wd][ad] =  expGolomb.readBits(2);
+          }
+        }
+      }
+    } else if (output.window_sequence === LONG_STOP_SEQUENCE) {
+      for (let bd = 1; bd <= output.max_band; bd++) {
+        output.adjust_num[bd] = [];
+        output.alevcode[bd] = [];
+        output.aloccode[bd] = [];
+        for (let wd = 0; wd < 2; wd++) {
+          output.adjust_num[bd][wd] = expGolomb.readBits(3);
+          output.alevcode[bd][wd] = [];
+          output.aloccode[bd][wd] = [];
+         for (let ad = 0; ad < output.adjust_num[bd][wd]; ad++) {
+            output.alevcode[bd][wd][ad] =  expGolomb.readBits(4);
+
+            if (wd === 0) {
+              output.aloccode[bd][wd][ad] =  expGolomb.readBits(4);
+            } else {
+              output.aloccode[bd][wd][ad] =  expGolomb.readBits(5);
+            }
+          }
+        }
+      }
+    }
+  },
+  encode: (expGolomb, input, options, index) => {
+  }
+};
+
+const decodeHCode = function (idx, sect_cb) {
+  let [unsigned, dim, lav] = codebookInfo[sect_cb];
+  let mod, off;
+  let v;
+  let vals = [];
+
+  if (unsigned) {
+    mod = lav + 1;
+    off = 0;
+  } else {
+    mod = 2 * lav + 1;
+    off = lav;
+  }
+
+  if (dim === 4) {
+    vals.push(v = parseInt(idx / (mod * mod * mod)) - off);
+    idx -= (v + off) * (mod * mod * mod);
+    vals.push(v = parseInt(idx / (mod * mod)) - off);
+    idx -= (v + off) * (mod * mod);
+    vals.push(v = parseInt(idx / mod) - off);
+    idx -= (v + off) * mod;
+    vals.push(idx - off);
+  } else {
+    vals.push(v = parseInt(idx / mod) - off);
+    idx -= (v + off) * mod
+    vals.push(idx - off);
+  }
+  return vals;
+};
+
+const getSignBits = function (vals, sect_cb) {
+  let [unsigned] = codebookInfo[sect_cb];
+
+  if (!unsigned) {
+    return 0;
+  } else {
+    return vals.filter(v => v !== 0).length;
+  }
+};
+
+const readEscValue = function (expGolomb) {
+  let bits = expGolomb.bitReservoir;
+  let N = 0;
+
+  for (N = 0; N < bits.length; N++) {
+    if (bits[N] === '0') {
+      let esc = expGolomb.readBits(N + 1);
+      let val = expGolomb.readBits(N + 4);
+
+      return Math.pow(2, N + 4) + val;
+    }
+  }
+};
+
 const spectralData = {
   decode: (expGolomb, output, options, index) => {
+    output.spectral_data = [];
     for (let g = 0; g < output.num_window_groups; g++) {
+      output.spectral_data[g] = [];
       for (let i = 0; i < output.num_sec[g]; i++) {
         let sect_cb = output.sect_cb[g][i];
-        if (sect_cb !== ZERO_HCB && sect_cb !== ESC_HCB && sect_cb !== NOISE_HCB && sect_cb !== INTENSITY_HCB && sect_cb !== INTENSITY_HCB2) {
-          for (let k = output.sect_sfb_offset[g][output.sect_start[g][i]];
-               k < output.sect_sfb_offset[g][output.sect_end[g][i]];) {
+        let start_k = output.sect_sfb_offset[g][output.sect_start[g][i]];
+        let end_k = output.sect_sfb_offset[g][output.sect_end[g][i]];
+
+        if (sect_cb !== ZERO_HCB && sect_cb <= ESC_HCB) {
+          for (let k = start_k; k < end_k;) {
+            let idx = readCodebookValue(spectrumCB[sect_cb], expGolomb);
+            let vals = decodeHCode(idx, sect_cb);
+            let numBits = getSignBits(vals, sect_cb);
+
+            // Read sign bits
+            let bits = expGolomb.readRawBits(numBits);
+
+            output.spectral_data[g][k] = vals[0];
+            output.spectral_data[g][k + 1] = vals[1];
             if (sect_cb < FIRST_PAIR_HCB) {
-              readCodebookValue(spectrumCB[sect_cb], expGolomb);
+              output.spectral_data[g][k + 2] = vals[2];
+              output.spectral_data[g][k + 3] = vals[3];
               k += QUAD_LEN;
-            } else if (sect_cb < ESC_HCB) {
-              readCodebookValue(spectrumCB[sect_cb], expGolomb);
+            } else {
+              if (sect_cb === ESC_HCB) {
+                if (vals[0] === ESC_FLAG) {
+                  output.spectral_data[g][k] = readEscValue(expGolomb);
+                }
+                if (vals[1] === ESC_FLAG) {
+                  output.spectral_data[g][k + 1] = readEscValue(expGolomb);
+                }
+              }
               k += PAIR_LEN;
             }
           }
@@ -217,7 +410,24 @@ const spectralData = {
   }
 };
 
-const ics = list([
+const readMsMask ={
+  decode: (expGolomb, output, options, index) => {
+    output.ms_used = [];
+
+    for (let g = 0; g < output.num_window_groups; g++) {
+      output.ms_used[g] = [];
+      for (let sfb = 0; sfb < output.max_sfb; sfb++) {
+        output.ms_used[g][sfb] = expGolomb.readBits(1);
+      }
+    }
+
+    return output;
+  },
+  encode: (expGolomb, input, options, index) => {
+  }
+};
+
+const icsInfo = list([
   data('ics_reserved_bit', u(1)),
   data('window_sequence', u(2)),
   data('window_shape', u(1)),
@@ -232,37 +442,63 @@ const ics = list([
           data('predictor_reset', u(1)),
           when(equals('predictor_reset', 1), data('predictor_reset_group_number', u(5))),
           each((index, options) => {
-            return index < Math.min(options.max_sfb, 40); // TODO: FIX HARDCODED FOR 48khz
+            return index < Math.min(options.max_sfb, PRED_SFB_MAX[options.sampling_frequency_index]);
           }, data('prediction_used[]', u(1)))
         ]))
     ])),
-  doPostIcsCalculation
+  doPostIcsInfoCalculation
+]);
+
+const pulseData = list([
+  data('number_pulse', u(2)),
+  data('pulse_start_sfb', u(6)),
+  each((index, options) => {
+    return index <= options.number_pulse;
+  }, list([
+    data('pulse_offset[]', u(5)),
+    data('pulse_amp[]', u(4))
+  ]))
 ]);
 
 const individualChannelStream = list([
   data('global_gain', u(8)),
-  when(not(equals('common_window', 1)), ics),
+  when(not(equals('common_window', 1)), icsInfo),
   sectionData,
   scaleFactorData,
   data('pulse_data_present', u(1)),
-  //when(equals('pulse_data_present', 1), pulseData),
+  when(equals('pulse_data_present', 1), pulseData),
   data('tns_data_present', u(1)),
   when(equals('tns_data_present', 1), tnsData),
   data('gain_control_data_present', u(1)),
-  //when(equals('gain_control_data_present', 1), gainControlData),
+  when(equals('gain_control_data_present', 1), gainControlData),
   spectralData
 ]);
 
 const noop = {decode:()=>{}};
 
+const elemTypes = [
+  'single_channel_element',
+  'channel_pair_element',
+  'coupling_channel_element',
+  'lfe_channel_element',
+  'data_stream_element',
+  'program_config_element',
+  'fill_element',
+  'end'
+];
+
 const elemParsers = [
-  noop,
-  list([
+  list([ // single_channel_element
+    data('element_instance_tag', u(4)),
+    individualChannelStream
+  ]),
+  list([ // channel_pair_element
     data('element_instance_tag', u(4)),
     data('common_window', u(1)),
     when(equals('common_window', 1), list([
-        ics,
-        data('ms_mask_present', u(2))
+        icsInfo,
+        data('ms_mask_present', u(2)),
+        when(equals('ms_mask_present', 1), readMsMask)
       ])),
     newObj('ics_1', list([
       data('type', val('individual_channel_stream')),
@@ -273,15 +509,96 @@ const elemParsers = [
        individualChannelStream
       ])),
   ]),
-  noop,
-  noop,
-  noop,
-  noop,
-  noop,
-  noop
+  noop, // coupling_channel_element
+  list([ // lfe_channel_element
+    data('element_instance_tag', u(4)),
+    individualChannelStream
+  ]),
+  list([ // data_stream_element
+    data('element_instance_tag', u(4)),
+    data('data_byte_align_flag', u(1)),
+    data('count', u(8)),
+    data('esc_count', val(0)),
+    when(equals('count', 255),
+      data('esc_count', u(8))),
+    when(equals('data_byte_align_flag', 1),
+      data('byte_alignment_bits', byteAlign)),
+    each((index, options) => {
+      return index < options.count + options.esc_count;
+    }, data('data_stream_byte[]', u(8)))
+  ]),
+  list([ // program_config_element
+    data('element_instance_tag', u(4)),
+    data('profile', u(2)),
+    data('sampling_frequency_index', u(4)),
+    data('num_front_channel_elements', u(4)),
+    data('num_side_channel_elements', u(4)),
+    data('num_back_channel_elements', u(4)),
+    data('num_lfe_channel_elements', u(2)),
+    data('num_assoc_data_elements', u(3)),
+    data('num_valid_cc_elements', u(4)),
+    data('mono_mixdown_present', u(1)),
+    when(equals('mono_mixdown_present', 1),
+      data('mono_mixdown_element_number', u(4))),
+    data('stereo_mixdown_present', u(1)),
+    when(equals('stereo_mixdown_present', 1),
+      data('stereo_mixdown_element_number', u(4))),
+    data('matrix_mixdown_idx_present', u(1)),
+    when(equals('matrix_mixdown_idx_present', 1), list([
+      data('matrix_mixdown_idx', u(2)),
+      data('pseudo_surround_enable', u(1))
+    ])),
+    each((index, options) => {
+      return index < options.num_front_channel_elements;
+    }, list([
+      data('front_element_is_cpe[]', u(1)),
+      data('front_element_tag_select[]', u(4))
+    ])),
+    each((index, options) => {
+      return index < options.num_side_channel_elements;
+    }, list([
+      data('side_element_is_cpe[]', u(1)),
+      data('side_element_tag_select[]', u(4))
+    ])),
+    each((index, options) => {
+      return index < options.num_back_channel_elements;
+    }, list([
+      data('back_element_is_cpe[]', u(1)),
+      data('back_element_tag_select[]', u(4))
+    ])),
+    each((index, options) => {
+      return index < options.num_lfe_channel_elements;
+    }, data('lfe_element_tag_select[]', u(4))),
+    each((index, options) => {
+      return index < options.num_assoc_data_elements;
+    }, data('assoc_data_element_tag_select[]', u(4))),
+    each((index, options) => {
+      return index < options.num_valid_cc_elements;
+    }, list([
+      data('cc_element_is_ind_sw[]', u(1)),
+      data('valid_cc_element_tag_select[]', u(4))
+    ])),
+    data('byte_alignment_bits', byteAlign()),
+    data('comment_field_bytes', u(8)),
+    each((index, options) => {
+      return index < options.comment_field_bytes;
+    }, data('comment_field_data[]', u(8)))
+  ]),
+  list([ // fill_element
+    data('count', u(4)),
+    data('esc_count', val(0)),
+    when(equals('count', 15),
+      data('esc_count', u(8))),
+    each((index, options) => {
+      return index < options.count + options.esc_count - 1;
+    }, data('fill_byte[]', u(8)))
+  ]),
+  list([ // end
+    data('byte_alignment_bits', byteAlign())
+  ])
 ];
 
-export const aacCodec = start('elements', each((index)=>index <= 0, //whileMoreData(
+export const aacCodec = start('elements', whileMoreData(
   newObj('elements[]',
     list([
       data('id_syn_ele', u(3)),
@@ -319,3 +636,44 @@ export const aacCodec = start('elements', each((index)=>index <= 0, //whileMoreD
       ]))
     ])
 )));
+
+const adts_error_check = when(equals('protection_absent', 0), data('crc_check', u(16)));
+
+const adts_header_error_check = list([
+  when(equals('protection_absent', 0),
+    each((index, options, output) => {
+      return index < output.number_of_raw_data_blocks_in_frame;
+    }, data('raw_data_block_position[]', u(16)))),
+  adts_error_check
+]);
+
+export const adtsCodec = start('adts_frame', list([
+  data('sync_word', u(12)),
+  data('ID', u(1)),
+  data('layer', u(2)),
+  data('protection_absent', u(1)),
+  data('profile', u(2)),
+  data('sampling_frequency_index', u(4)),
+  data('private_bit', u(1)),
+  data('channel_configuration', u(3)),
+  data('original_copy', u(1)),
+  data('home', u(1)),
+  data('copyright_identification_bit', u(1)),
+  data('copyright_identification_start', u(1)),
+  data('aac_frame_length', u(13)),
+  data('adts_buffer_fullness', u(11)),
+  data('number_of_raw_data_blocks_in_frame', u(2)),
+  when(equals('number_of_raw_data_blocks_in_frame', 0), list([
+    adts_error_check,
+    aacCodec
+  ])),
+  when(not(equals('number_of_raw_data_blocks_in_frame', 0)), list([
+    adts_header_error_check,
+    each((index, options, output) => {
+      return index <= output.number_of_raw_data_blocks_in_frame;
+    }, list([
+      newObj('frames[]', aacCodec),
+      adts_error_check
+    ]))
+  ])),
+]));

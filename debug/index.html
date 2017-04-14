@@ -155,9 +155,9 @@
     var doTumbcoil = function(filename, data) {
       var fileTypeInspector = 'mp4Inspector';
 
-      if (/\.ts$/i.test(filename)) {
+      if (/\.ts/i.test(filename)) {
         fileTypeInspector = 'tsInspector';
-      } else  if (/\.flv$/i.test(filename)) {
+      } else  if (/\.flv/i.test(filename)) {
         fileTypeInspector = 'flvInspector';
       }
 
@@ -178,11 +178,10 @@
       let url = remote.value;
 
       if (url) {
-        let filename = url.split('/').pop();
         xhr.responseType = 'arraybuffer';
         xhr.addEventListener('load', function() {
           var filedata = new Uint8Array(xhr.response);
-          doTumbcoil(filename, filedata);
+          doTumbcoil(url, filedata);
         });
         xhr.open('GET', url);
         xhr.send();

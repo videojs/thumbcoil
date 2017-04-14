@@ -8,6 +8,14 @@ export const ExpGolombDecoder = function (bitString) {
   this.originalBitReservoir = bitString;
 };
 
+ExpGolombDecoder.prototype.byteAlign = function () {
+  let byteBoundary = Math.ceil((this.originalBitReservoir.length - this.bitReservoir.length) / 8) * 8;
+  let bitsLeft = this.originalBitReservoir.length - byteBoundary;
+  let bitsToRemove = this.bitReservoir.length - bitsLeft;
+
+  return this.readRawBits(bitsToRemove);
+};
+
 ExpGolombDecoder.prototype.countLeadingZeros = function () {
   let i = 0;
 
@@ -23,6 +31,10 @@ ExpGolombDecoder.prototype.countLeadingZeros = function () {
 ExpGolombDecoder.prototype.readUnsignedExpGolomb = function () {
   let zeros = this.countLeadingZeros();
   let bitCount = zeros * 2 + 1;
+
+  if (zeros === -1) {
+    throw new Error('Error reading exp-golomb value.');
+  }
 
   let val = parseInt(this.bitReservoir.slice(zeros, bitCount), 2);
 
@@ -48,6 +60,10 @@ ExpGolombDecoder.prototype.readExpGolomb = function () {
 };
 
 ExpGolombDecoder.prototype.readBits = function (bitCount) {
+  if (this.bitReservoir.length < bitCount) {
+    throw new Error(`Error reading bit stream value. There were (${this.bitReservoir.length}) bits remaining but expected (${bitCount}).`);
+  }
+
   let val = parseInt(this.bitReservoir.slice(0, bitCount), 2);
 
   this.bitReservoir = this.bitReservoir.slice(bitCount);
@@ -56,6 +72,10 @@ ExpGolombDecoder.prototype.readBits = function (bitCount) {
 };
 
 ExpGolombDecoder.prototype.readRawBits = function (bitCount) {
+  if (this.bitReservoir.length < bitCount) {
+    throw new Error(`Error reading bit stream value. There were (${this.bitReservoir.length}) bits remaining but expected (${bitCount}).`);
+  }
+
   let val = this.bitReservoir.slice(0, bitCount);
 
   this.bitReservoir = this.bitReservoir.slice(bitCount);
