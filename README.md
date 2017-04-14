@@ -1,6 +1,6 @@
 # Thumbcoil
 
-Tools for inspecting MPEG2TS and MP4 files and the codec bitstreams therein
+Thumbcoil is a video inspector tool that can unpackage various media containers and inspect the bitstreams therein. Thumbcoil runs entirely within your browser so that none of your video data is ever transmitted to a server.
 
 ## Table of Contents
 
@@ -22,13 +22,9 @@ Tools for inspecting MPEG2TS and MP4 files and the codec bitstreams therein
 npm install --save thumbcoil
 ```
 
-## About
-
-Thumbcoil is a video inspector tool that can unpackage various media containers and inspect the bitstreams therein. Thumbcoil runs in your browser and your video data is never transmitted to a server.
-
 ## Container Support
 
-Thumbcoil supports the following contain formats:
+Thumbcoil supports the following container formats:
 
 * MPEG2-TS
   * PAT
@@ -45,7 +41,7 @@ Thumbcoil supports the following contain formats:
 
 ### H.264
 
-Thumbcoil supports the parsing of the following NAL units:
+Thumbcoil supports the parsing *and writing* of the following NAL units:
 
 * `access_unit_delimiter`
 * `sequence_paramter_set`
@@ -61,6 +57,17 @@ Thumbcoil supports the parsing of the following NAL units:
   * `pic_timing`
   * `user_data_registered_itu_t_t35`
   * `recovery_point`
+
+### AAC
+
+Thumbcoil supports the parsing of the following AAC stream elements:
+
+* `single_channel_element`
+* `channel_pair_element`
+* `coupling_channel_element`
+* `lfe_channel_element`
+* `data_stream_element`
+* `program_config_element`
 
 ## License
 
