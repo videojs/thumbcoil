@@ -24,10 +24,6 @@ const dataToHex = function (value, indent) {
     return '<>';
   }
 
-  if (bytes.length === 1) {
-    return bytes.join('').slice(1);
-  }
-
   return bytes.map(function (line, index) {
     let hexSide = indent + line;
 

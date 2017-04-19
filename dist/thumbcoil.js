@@ -1,6 +1,6 @@
 /**
  * thumbcoil
- * @version 1.2.0
+ * @version 1.2.1
  * @copyright 2017 Brightcove, Inc.
  * @license Apache-2.0
  */
@@ -3020,10 +3020,6 @@ var dataToHex = function dataToHex(value, indent) {
     return '<>';
   }
 
-  if (bytes.length === 1) {
-    return bytes.join('').slice(1);
-  }
-
   return bytes.map(function (line, index) {
     var hexSide = indent + line;
 
@@ -4671,7 +4667,12 @@ var parseTransportStreamPackets = function parseTransportStreamPackets(packets) 
   };
 
   var processPes = function processPes(packet) {
-    packet.content.streamType = programMapTable[packet.pid];
+    var pmtTable = programMapTable[packet.pid];
+    if (pmtTable) {
+      packet.content.streamType = pmtTable.streamType;
+    } else {
+      packet.content.streamType = ' unknown';
+    }
     packet.content.type = 'pes';
   };
 
@@ -4752,13 +4753,18 @@ var parseTransportStreamPackets = function parseTransportStreamPackets(packets) 
 
     // advance the offset to the first entry in the mapping table
     offset = 12 + programInfoLength;
+
     while (offset < tableEnd) {
+      var esInfoLength = (payload[offset + 3] & 0x0F) << 8 | payload[offset + 4];
       // add an entry that maps the elementary_pid to the stream_type
-      programMapTable[(payload[offset + 1] & 0x1F) << 8 | payload[offset + 2]] = payload[offset];
+      programMapTable[(payload[offset + 1] & 0x1F) << 8 | payload[offset + 2]] = {
+        streamType: payload[offset],
+        esInfo: payload.subarray(offset + 5, offset + 5 + esInfoLength)
+      };
 
       // move to the next table entry
       // skip past the elementary stream descriptors, if present
-      offset += ((payload[offset + 3] & 0x0F) << 8 | payload[offset + 4]) + 5;
+      offset += esInfoLength + 5;
     }
 
     // record the map on the packet as well
@@ -4835,21 +4841,7 @@ var parsePesPackets = function parsePesPackets(packets) {
   var completeEs = [],
 
   // PES packet fragments
-  video = {
-    data: [],
-    tsPacketIndices: [],
-    size: 0
-  },
-      audio = {
-    data: [],
-    tsPacketIndices: [],
-    size: 0
-  },
-      timedMetadata = {
-    data: [],
-    tsPacketIndices: [],
-    size: 0
-  },
+  streams = [],
       parsePes = function parsePes(payload, pes) {
     var ptsDtsFlags;
 
@@ -4888,10 +4880,10 @@ var parsePesPackets = function parsePesPackets(packets) {
     // that follow the last byte of the field.
     pes.data = payload.subarray(9 + payload[8]);
   },
-      flushStream = function flushStream(stream, type) {
+      flushStream = function flushStream(stream) {
     var packetData = new Uint8Array(stream.size),
         event = {
-      type: type
+      type: stream.streamType
     },
         i = 0,
         fragment;
@@ -4939,28 +4931,34 @@ var parsePesPackets = function parsePesPackets(packets) {
       var streamType = undefined;
       var pes = packet.content;
 
-      switch (pes.streamType) {
-        case STREAM_TYPES.h264:
-          stream = video;
-          streamType = 'video';
-          break;
-        case STREAM_TYPES.adts:
-          stream = audio;
-          streamType = 'audio';
-          break;
-        case STREAM_TYPES.metadata:
-          stream = timedMetadata;
-          streamType = 'timed-metadata';
-          break;
-        default:
-          // ignore unknown stream types
-          return;
+      if (!streams[packet.pid]) {
+        stream = streams[packet.pid] = {
+          data: [],
+          tsPacketIndices: [],
+          size: 0
+        };
+
+        switch (pes.streamType) {
+          case STREAM_TYPES.h264:
+            stream.streamType = 'video';
+            break;
+          case STREAM_TYPES.adts:
+            stream.streamType = 'audio';
+            break;
+          case STREAM_TYPES.metadata:
+            stream.streamType = 'timed-metadata';
+            break;
+          default:
+            stream.streamType = 'unknown-' + packet.pid;
+        }
       }
+
+      stream = streams[packet.pid];
 
       // if a new packet is starting, we can flush the completed
       // packet
       if (packet.payloadUnitStartIndicator) {
-        flushStream(stream, streamType);
+        flushStream(stream);
       }
 
       stream.pid = packet.pid;
@@ -4990,13 +4988,19 @@ var parsePesPackets = function parsePesPackets(packets) {
           track = {};
 
           track.id = +k;
-          if (programMapTable[k] === STREAM_TYPES.h264) {
+          track.streamType = programMapTable[k].streamType;
+          if (programMapTable[k].streamType === STREAM_TYPES.h264) {
             track.codec = 'avc';
             track.type = 'video';
-          } else if (programMapTable[k] === STREAM_TYPES.adts) {
+          } else if (programMapTable[k].streamType === STREAM_TYPES.adts) {
             track.codec = 'adts';
             track.type = 'audio';
+          } else if (programMapTable[k].streamType === STREAM_TYPES.metadata) {
+            track.type = 'metadata';
+          } else {
+            track.type = 'unknown';
           }
+          track.esInfo = programMapTable[k].esInfo;
           event.tracks.push(track);
         }
       }
@@ -5020,9 +5024,9 @@ var parsePesPackets = function parsePesPackets(packets) {
     parsePacket(packet, packetIndex);
   });
 
-  flushStream(video, 'video');
-  flushStream(audio, 'audio');
-  flushStream(timedMetadata, 'timed-metadata');
+  streams.forEach(function (stream) {
+    flushStream(stream);
+  });
 
   return completeEs;
 };
@@ -6066,7 +6070,7 @@ var thumbCoil = {
 };
 
 // Include the version number.
-thumbCoil.VERSION = '1.2.0';
+thumbCoil.VERSION = '1.2.1';
 
 exports['default'] = thumbCoil;
 module.exports = exports['default'];
