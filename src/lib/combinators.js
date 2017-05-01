@@ -1,5 +1,4 @@
 'use strict';
-
 import {ExpGolombEncoder, ExpGolombDecoder} from './exp-golomb-string';
 import {
   typedArrayToBitString,
@@ -7,6 +6,7 @@ import {
   removeRBSPTrailingBits,
   appendRBSPTrailingBits
 } from './rbsp-utils';
+import {mergeObj} from './merge-obj';
 
 /**
  * General ExpGolomb-Encoded-Structure Parse Functions
@@ -15,13 +15,21 @@ export const start = function (name, parseFn) {
   return {
     decode: (input, options, output) => {
       let rawBitString = typedArrayToBitString(input);
-      let bitString = removeRBSPTrailingBits(rawBitString);
+      let bitString = rawBitString;
+
+      options = options || {};
+      output = output || {};
+
+      if (!options.no_trailer_bits) {
+        bitString = removeRBSPTrailingBits(rawBitString);
+      }
       let expGolombDecoder = new ExpGolombDecoder(bitString);
 
-      output = output || {};
-      options = options || {};
-
-      return parseFn.decode(expGolombDecoder, output, options);
+      try {
+        return parseFn.decode(expGolombDecoder, output, options);
+      } catch (e) {
+        return e;
+      }
     },
     encode: (input, options) => {
       let expGolombEncoder = new ExpGolombEncoder();
@@ -32,7 +40,6 @@ export const start = function (name, parseFn) {
 
       let output = expGolombEncoder.bitReservoir;
       let bitString = appendRBSPTrailingBits(output);
-      console.log(bitString)
       let data = bitStringToTypedArray(bitString);
 
       return data;
@@ -181,7 +188,7 @@ export const newObj = (name, parseFn) => {
         index = indexOverride;
       }
 
-      value = parseFn.decode(expGolomb, {}, options, index);
+      value = parseFn.decode(expGolomb, Object.create(output), options, index);
 
       if (!nameArray) {
         output[property] = value;

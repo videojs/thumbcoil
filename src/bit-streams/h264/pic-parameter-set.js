@@ -1,6 +1,6 @@
 'use strict';
 
-import {start, list, data, debug, verify} from './lib/combinators';
+import {start, list, data, debug, verify} from '../../lib/combinators';
 import {
   when,
   each,
@@ -10,8 +10,8 @@ import {
   every,
   not,
   whenMoreData
-} from './lib/conditionals';
-import {ue, u, se, val} from './lib/data-types';
+} from '../../lib/conditionals';
+import {ue, u, se, val} from '../../lib/data-types';
 
 import scalingList from './scaling-list';
 

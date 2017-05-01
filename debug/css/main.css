@@ -383,3 +383,47 @@ fieldset {
         page-break-after: avoid;
     }
 }
+
+
+.label, .input {
+    padding-right: 2em;
+    display: block;
+}
+
+.label {
+    padding-right: 2em;
+}
+
+.input {
+    width: 100%;
+}
+
+.input>input {
+    width: 40em;
+}
+
+.input>button{
+    float: right;
+}
+
+.frame-bar {
+    border-radius: 2px;
+    position: relative;
+    width: 5px;
+}
+.frame-bar-I {
+    background-color: #43c083;
+}
+.frame-bar-P {
+    background-color: #bf4055;
+}
+.frame-bar-B {
+    background-color: #5540bf;
+}
+.gop-bar {
+    border-radius: 6px;
+    position: relative;
+    background-color: #DDD;
+    width: 100%;
+    text-align: center;
+}

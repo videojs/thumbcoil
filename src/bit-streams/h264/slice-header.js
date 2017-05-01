@@ -1,8 +1,8 @@
 'use strict';
 
-import {start, list, data, debug, verify} from './lib/combinators';
-import {when, each, inArray, equals, some, every, not} from './lib/conditionals';
-import {ue, u, se, val} from './lib/data-types';
+import {start, list, data, debug, verify} from '../../lib/combinators';
+import {when, each, inArray, equals, some, every, not} from '../../lib/conditionals';
+import {ue, u, se, val} from '../../lib/data-types';
 
 let v = null;
 

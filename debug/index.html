@@ -78,6 +78,7 @@
   </style>
 </head>
 <body>
+  <a href="https://github.com/videojs/thumbcoil"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/a6677b08c955af8400f44c6298f40e7d19cc5b2d/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677261795f3664366436642e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png"></a>
   <div class="header-container">
     <header class="wrapper clearfix">
       <h1 class="title">Thumbcoil</h1>
@@ -98,18 +99,26 @@
           <h2>Inputs</h2>
           <form id="inputs">
             <fieldset>
-              <legend>Video Input</legend>
-              <label>
-                Load a *.mp4, *.flv or *.ts:
-                <input type="file" id="working">
-              </label>
+              <legend>Video Input (a *.mp4, *.flv or *.ts)</legend>
+              <div style="float:left;">
+                <label class="label" for="file">
+                  Local File:
+                </label>
+                <label class="label" for="remote">
+                  URL:
+                </label>
+              </div>
+              <div>
+                <div class="input"><input type="file" id="local"><button type="button" id="loadfile">Load File</button></div>
+                <div class="input"><input type="text" id="remote" value="https://hslsslak-a.akamaihd.net/3303963094001/5147667971001/3303963094001_5147667971001_5147609827001-1.ts"><button type="button" id="loadurl">Load URL</button></div>
+              </div>
             </fieldset>
           </form>
         </section>
         <section>
           <h2>Structure</h2>
           <div class="result-wrapper">
-            <div class="working-boxes"></div>
+            <div class="output"></div>
           </div>
         </section>
       </article>
@@ -123,37 +132,79 @@
     'use strict';
     var
       $ = document.querySelector.bind(document),
-      working = $('#working'),
-      workingBoxes = $('.working-boxes');
-
-    working.addEventListener('change', function() {
-      var reader = new FileReader();
-
-      // do nothing if no file was chosen
-      if (!this.files[0]) {
-        return;
+      local = $('#local'),
+      loadfile = $('#loadfile'),
+      remote = $('#remote'),
+      loadurl = $('#loadurl'),
+      output = $('.output'),
+      thumbcoilUI = {
+        handlers_: {},
+        addEventListener: function (eventName, fn) {
+          let eventHandlers = this.handlers_[eventName] || [];
+          eventHandlers.push(fn);
+          this.handlers_[eventName] = eventHandlers;
+        },
+        trigger: function (eventName, data) {
+          let eventHandlers = this.handlers_[eventName] || [];
+          return eventHandlers.slice().map(function (fn) {
+            return fn(data);
+          });
+        }
       }
+
+    var doTumbcoil = function(filename, data) {
       var fileTypeInspector = 'mp4Inspector';
 
-      if (/\.ts$/i.test(this.files[0].name)) {
+      if (/\.ts/i.test(filename)) {
         fileTypeInspector = 'tsInspector';
-      } else  if (/\.flv$/i.test(this.files[0].name)) {
+      } else  if (/\.flv/i.test(filename)) {
         fileTypeInspector = 'flvInspector';
       }
 
-      reader.addEventListener('loadend', function() {
-        var bytes = new Uint8Array(reader.result);
-        var workingParsed = thumbcoil[fileTypeInspector].inspect(bytes);
+      var inputParsed = thumbcoil[fileTypeInspector].inspect(data);
 
-        // clear old box info
-        workingBoxes.innerHTML = '';
-        console.log(workingParsed);
-        if (thumbcoil[fileTypeInspector].domify) {
-          workingBoxes.appendChild(thumbcoil[fileTypeInspector].domify(workingParsed));
-        }
+      // clear old box info
+      output.innerHTML = '';
+      thumbcoilUI.trigger('parsed', inputParsed);
+      if (thumbcoil[fileTypeInspector].domify) {
+        output.appendChild(thumbcoil[fileTypeInspector].domify(inputParsed));
+        thumbcoilUI.trigger('done', output);
+      }
+    };
+
+    // URL support
+    loadurl.addEventListener('click', function() {
+      var xhr = new XMLHttpRequest();
+      let url = remote.value;
+
+      if (url) {
+        xhr.responseType = 'arraybuffer';
+        xhr.addEventListener('load', function() {
+          var filedata = new Uint8Array(xhr.response);
+          doTumbcoil(url, filedata);
+        });
+        xhr.open('GET', url);
+        xhr.send();
+      }
+    });
+
+    //Local file support
+    loadfile.addEventListener('click', function() {
+      var reader = new FileReader();
+
+      // do nothing if no file was chosen
+      if (!local.files[0]) {
+        return;
+      }
+
+      var filename = local.files[0].name;
+
+      reader.addEventListener('loadend', function() {
+        var filedata = new Uint8Array(reader.result);
+        doTumbcoil(filename, filedata);
       });
-      reader.readAsArrayBuffer(this.files[0]);
-    }, false);
+      reader.readAsArrayBuffer(local.files[0]);
+    });
   </script>
   <script>
     document.body.addEventListener('click', function (e) {

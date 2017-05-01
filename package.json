@@ -1,6 +1,6 @@
 {
   "name": "thumbcoil",
-  "version": "1.1.0",
+  "version": "1.2.3",
   "description": "Tools for inspecting MPEG2TS and MP4 files and the codec bitstreams therein",
   "main": "es5/index.js",
   "scripts": {
@@ -68,9 +68,6 @@
     "scripts/",
     "src/"
   ],
-  "dependencies": {
-    "mux.js": "^3.0.2"
-  },
   "devDependencies": {
     "babel": "^6.5.2",
     "babelify": "^7.3.0",

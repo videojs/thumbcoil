@@ -80,6 +80,15 @@ const dataTypes = {
         }
       }
     };
+  },
+  byteAlign: () => {
+    return {
+      read: (expGolomb, output, options, index) => {
+        return expGolomb.byteAlign();
+      },
+      write: (expGolomb, input, options, index, value) => {
+      }
+    }
   }
 };
 

@@ -1,8 +1,8 @@
 'use strict';
 
-import {list, data} from './lib/combinators';
-import {u, ue} from './lib/data-types';
-import {each} from './lib/conditionals';
+import {list, data} from '../../lib/combinators';
+import {u, ue} from '../../lib/data-types';
+import {each} from '../../lib/conditionals';
 
 import scalingList from './scaling-list';
 

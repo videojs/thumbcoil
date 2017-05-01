@@ -176,6 +176,7 @@ const parsePESPackets = function (pesPackets, parent, depth) {
 const parseNals = function (packet) {
   if (packet.type === 'video') {
     packet.nals = nalParseAVCC(packet.data);
+    packet.nals.size = packet.data.length;
   }
   return packet;
 };
@@ -232,7 +233,8 @@ const domifyBox = function (box, parentNode, depth) {
       if (Array.isArray(box[key])) {
         domifyBox({
           type: key,
-          boxes: box[key]
+          boxes: box[key],
+          size: box[key].size
         },
         subBoxesNode,
         depth + 1);
@@ -256,7 +258,18 @@ const makeProperty = function (name, value, parentNode) {
 
   if (value instanceof Uint8Array || value instanceof Uint32Array) {
     let strValue = dataToHex(value, '');
-    let truncValue = strValue.slice(0, 1029); // 21 rows of 16 bytes
+    let sliceOffset = 0;
+    let lines = 0;
+
+    for (; sliceOffset < strValue.length; sliceOffset++) {
+      if (strValue[sliceOffset] === '\n') {
+        if (++lines === 21) {
+          sliceOffset++;
+          break;
+        }
+      }
+    }
+    let truncValue = strValue.slice(0, sliceOffset);
 
     if (truncValue.length < strValue.length) {
       truncValue += '<' + (value.byteLength - 336) + 'b remaining of ' + value.byteLength + 'b total>';
