@@ -507,13 +507,7 @@ const domifyTs = function (object) {
 const parsePESPackets = function (pesPackets, parent, depth) {
   pesPackets.forEach((packet) => {
     var packetEl = document.createElement('div');
-    if (packet.type === 'video') {
-      domifyBox(parseNals(packet), parent, depth + 1);
-    } else if (packet.type === 'audio') {
-      domifyBox(parseAac(packet), parent, depth + 1);
-    } else {
-      domifyBox(packet, parent, depth + 1);
-    }
+    domifyBox(packet, parent, depth + 1);
   });
 };
 
