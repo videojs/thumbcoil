@@ -350,6 +350,14 @@ const parsePesPackets = function(packets) {
       // parse assembled packet's PES header
       parsePes(packetData, event);
 
+      if (event.type === 'video') {
+        parseNals(event);
+      }
+
+      if (event.type === 'audio') {
+        parseAac(event);
+      }
+
       stream.size = 0;
       stream.tsPacketIndices = [];
 
