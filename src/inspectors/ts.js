@@ -350,6 +350,14 @@ const parsePesPackets = function(packets) {
       // parse assembled packet's PES header
       parsePes(packetData, event);
 
+      if (event.type === 'video') {
+        parseNals(event);
+      }
+
+      if (event.type === 'audio') {
+        parseAac(event);
+      }
+
       stream.size = 0;
       stream.tsPacketIndices = [];
 
@@ -499,13 +507,7 @@ const domifyTs = function (object) {
 const parsePESPackets = function (pesPackets, parent, depth) {
   pesPackets.forEach((packet) => {
     var packetEl = document.createElement('div');
-    if (packet.type === 'video') {
-      domifyBox(parseNals(packet), parent, depth + 1);
-    } else if (packet.type === 'audio') {
-      domifyBox(parseAac(packet), parent, depth + 1);
-    } else {
-      domifyBox(packet, parent, depth + 1);
-    }
+    domifyBox(packet, parent, depth + 1);
   });
 };
 

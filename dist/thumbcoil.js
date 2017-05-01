@@ -1,6 +1,6 @@
 /**
  * thumbcoil
- * @version 1.2.1
+ * @version 1.2.3
  * @copyright 2017 Brightcove, Inc.
  * @license Apache-2.0
  */
@@ -4906,6 +4906,14 @@ var parsePesPackets = function parsePesPackets(packets) {
     // parse assembled packet's PES header
     parsePes(packetData, event);
 
+    if (event.type === 'video') {
+      parseNals(event);
+    }
+
+    if (event.type === 'audio') {
+      parseAac(event);
+    }
+
     stream.size = 0;
     stream.tsPacketIndices = [];
 
@@ -5055,13 +5063,7 @@ var domifyTs = function domifyTs(object) {
 var parsePESPackets = function parsePESPackets(pesPackets, parent, depth) {
   pesPackets.forEach(function (packet) {
     var packetEl = document.createElement('div');
-    if (packet.type === 'video') {
-      domifyBox(parseNals(packet), parent, depth + 1);
-    } else if (packet.type === 'audio') {
-      domifyBox(parseAac(packet), parent, depth + 1);
-    } else {
-      domifyBox(packet, parent, depth + 1);
-    }
+    domifyBox(packet, parent, depth + 1);
   });
 };
 
@@ -6070,7 +6072,7 @@ var thumbCoil = {
 };
 
 // Include the version number.
-thumbCoil.VERSION = '1.2.1';
+thumbCoil.VERSION = '1.2.3';
 
 exports['default'] = thumbCoil;
 module.exports = exports['default'];
