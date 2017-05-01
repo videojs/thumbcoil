@@ -68,9 +68,6 @@
     "scripts/",
     "src/"
   ],
-  "dependencies": {
-    "mux.js": "^2.3.1"
-  },
   "devDependencies": {
     "babel": "^5.8.35",
     "babelify": "^6.4.0",
