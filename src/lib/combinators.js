@@ -7,11 +7,36 @@ import {
   appendRBSPTrailingBits
 } from './rbsp-utils';
 import {mergeObj} from './merge-obj';
+import {list as listFn} from './list';
+
+/**
+ *  parse_context = {
+ *    options: {},
+ *    output: {} || [],
+ *    expGolomb,
+ *    indexes: []
+ *    path: []
+ *  }
+ */
+
+const makeParseContext = function(name, expGolomb, output, options) {
+  return {
+    options,
+    output,
+    expGolomb,
+    indexes: [],
+    path: []
+  };
+};
+
+export const list = listFn;
 
 /**
  * General ExpGolomb-Encoded-Structure Parse Functions
  */
-export const start = function (name, parseFn) {
+export const start = function (name, ...parseFns) {
+  const parseFn = list(parseFns);
+
   return {
     decode: (input, options, output) => {
       let rawBitString = typedArrayToBitString(input);
@@ -28,7 +53,8 @@ export const start = function (name, parseFn) {
       try {
         return parseFn.decode(expGolombDecoder, output, options);
       } catch (e) {
-        return e;
+        output.EXCEPTION = e.message;
+        return output;
       }
     },
     encode: (input, options) => {
@@ -47,31 +73,14 @@ export const start = function (name, parseFn) {
   };
 };
 
-export const startArray = function (name, parseFn) {
-  let startObj = start(name, parseFn);
+export const startArray = function (name, ...parseFns) {
+  let startObj = start(name, ...parseFns);
 
   return {
     decode: (input, options) => {
       return startObj.decode(input, options, []);
     },
     encode: startObj.encode
-  };
-};
-
-export const list = function (parseFns) {
-  return {
-    decode: (expGolomb, output, options, index) => {
-      parseFns.forEach((fn) => {
-        output = fn.decode(expGolomb, output, options, index) || output;
-      });
-
-      return output;
-    },
-    encode: (expGolomb, input, options, index) => {
-      parseFns.forEach((fn) => {
-        fn.encode(expGolomb, input, options, index);
-      });
-    }
   };
 };
 
@@ -159,7 +168,8 @@ export const debug = function (prefix) {
   };
 };
 
-export const newObj = (name, parseFn) => {
+export const newObj = (name, ...parseFns) => {
+  const parseFn = list(parseFns);
   let nameSplit = name.split(/\[(\d*)\]/);
   let property = nameSplit[0];
   let indexOverride;

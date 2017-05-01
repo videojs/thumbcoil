@@ -117,50 +117,38 @@ let sampleRatioCalc = list([
     data('sample_ratio', val(2 / 1))),
   /* Extended_SAR */
   when(equals('aspect_ratio_idc', 255),
-    list([
-      data('sar_width', u(16)),
-      data('sar_height', u(16)),
-      data('sample_ratio',
-        val((expGolomb, output, options) => output.sar_width / output.sar_height))
-    ]))
+    data('sar_width', u(16)),
+    data('sar_height', u(16)),
+    data('sample_ratio',
+      val((expGolomb, output, options) => output.sar_width / output.sar_height)))
 ]);
 
 const vuiParamters = list([
   data('aspect_ratio_info_present_flag', u(1)),
   when(equals('aspect_ratio_info_present_flag', 1),
-    list([
-      data('aspect_ratio_idc', u(8)),
-      sampleRatioCalc,
-    ])),
+    data('aspect_ratio_idc', u(8)),
+    sampleRatioCalc),
   data('overscan_info_present_flag', u(1)),
   when(equals('overscan_info_present_flag', 1),
     data('overscan_appropriate_flag', u(1))),
   data('video_signal_type_present_flag', u(1)),
   when(equals('video_signal_type_present_flag', 1),
-    list([
-      data('video_format', u(3)),
-      data('video_full_range_flag', u(1)),
-      data('colour_description_present_flag', u(1)),
-      when(equals('colour_description_present_flag', 1),
-        list([
-          data('colour_primaries', u(8)),
-          data('transfer_characteristics', u(8)),
-          data('matrix_coefficients', u(8))
-        ]))
-    ])),
+    data('video_format', u(3)),
+    data('video_full_range_flag', u(1)),
+    data('colour_description_present_flag', u(1)),
+    when(equals('colour_description_present_flag', 1),
+      data('colour_primaries', u(8)),
+      data('transfer_characteristics', u(8)),
+      data('matrix_coefficients', u(8)))),
   data('chroma_loc_info_present_flag', u(1)),
   when(equals('chroma_loc_info_present_flag', 1),
-    list([
-      data('chroma_sample_loc_type_top_field', ue(v)),
-      data('chroma_sample_loc_type_bottom_field', ue(v))
-    ])),
+    data('chroma_sample_loc_type_top_field', ue(v)),
+    data('chroma_sample_loc_type_bottom_field', ue(v))),
   data('timing_info_present_flag', u(1)),
   when(equals('timing_info_present_flag', 1),
-    list([
-      data('num_units_in_tick', u(32)),
-      data('time_scale', u(32)),
-      data('fixed_frame_rate_flag', u(1))
-    ])),
+    data('num_units_in_tick', u(32)),
+    data('time_scale', u(32)),
+    data('fixed_frame_rate_flag', u(1))),
   data('nal_hrd_parameters_present_flag', u(1)),
   when(equals('nal_hrd_parameters_present_flag', 1), hdrParameters),
   data('vcl_hrd_parameters_present_flag', u(1)),
@@ -174,15 +162,13 @@ const vuiParamters = list([
   data('pic_struct_present_flag', u(1)),
   data('bitstream_restriction_flag', u(1)),
   when(equals('bitstream_restriction_flag', 1),
-    list([
-      data('motion_vectors_over_pic_boundaries_flag', u(1)),
-      data('max_bytes_per_pic_denom', ue(v)),
-      data('max_bits_per_mb_denom', ue(v)),
-      data('log2_max_mv_length_horizontal', ue(v)),
-      data('log2_max_mv_length_vertical', ue(v)),
-      data('max_num_reorder_frames', ue(v)),
-      data('max_dec_frame_buffering', ue(v))
-    ]))
+    data('motion_vectors_over_pic_boundaries_flag', u(1)),
+    data('max_bytes_per_pic_denom', ue(v)),
+    data('max_bits_per_mb_denom', ue(v)),
+    data('log2_max_mv_length_horizontal', ue(v)),
+    data('log2_max_mv_length_vertical', ue(v)),
+    data('max_num_reorder_frames', ue(v)),
+    data('max_dec_frame_buffering', ue(v)))
 ]);
 
 export default vuiParamters;

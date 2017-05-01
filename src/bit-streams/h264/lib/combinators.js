@@ -236,18 +236,3 @@ export const verify = function (name) {
     encode: (expGolomb, input, options, index) => {}
   };
 };
-
-export const pickOptions = function (property, value) {
-  return {
-    decode: (expGolomb, output, options, index) => {
-      if (typeof options[property] !== undefined) {
-   //     options[property][value];
-      }
-    },
-    encode: (expGolomb, input, options, index) => {
-      if (typeof options[property] !== undefined) {
-     //   options.values options[property][value];
-      }
-    }
-  };
-};

@@ -431,21 +431,19 @@ const icsInfo = list([
   data('ics_reserved_bit', u(1)),
   data('window_sequence', u(2)),
   data('window_shape', u(1)),
-  when(equals('window_sequence', EIGHT_SHORT_SEQUENCE), list([
-      data('max_sfb', u(4)),
-      data('scale_factor_grouping', u(7))
-    ])),
-  when(not(equals('window_sequence', EIGHT_SHORT_SEQUENCE)), list([
-      data('max_sfb', u(6)),
-      data('predictor_data_present', u(1)),
-      when(equals('predictor_data_present', 1), list([
-          data('predictor_reset', u(1)),
-          when(equals('predictor_reset', 1), data('predictor_reset_group_number', u(5))),
-          each((index, options) => {
-            return index < Math.min(options.max_sfb, PRED_SFB_MAX[options.sampling_frequency_index]);
-          }, data('prediction_used[]', u(1)))
-        ]))
-    ])),
+  when(equals('window_sequence', EIGHT_SHORT_SEQUENCE),
+    data('max_sfb', u(4)),
+    data('scale_factor_grouping', u(7))),
+  when(not(equals('window_sequence', EIGHT_SHORT_SEQUENCE)),
+    data('max_sfb', u(6)),
+    data('predictor_data_present', u(1)),
+    when(equals('predictor_data_present', 1),
+      data('predictor_reset', u(1)),
+      when(equals('predictor_reset', 1), data('predictor_reset_group_number', u(5))),
+      each((index, options) => {
+          return index < Math.min(options.max_sfb, PRED_SFB_MAX[options.sampling_frequency_index]);
+        },
+        data('prediction_used[]', u(1))))),
   doPostIcsInfoCalculation
 ]);
 
@@ -453,24 +451,27 @@ const pulseData = list([
   data('number_pulse', u(2)),
   data('pulse_start_sfb', u(6)),
   each((index, options) => {
-    return index <= options.number_pulse;
-  }, list([
+      return index <= options.number_pulse;
+    },
     data('pulse_offset[]', u(5)),
-    data('pulse_amp[]', u(4))
-  ]))
+    data('pulse_amp[]', u(4)))
 ]);
 
 const individualChannelStream = list([
   data('global_gain', u(8)),
-  when(not(equals('common_window', 1)), icsInfo),
+  when(not(equals('common_window', 1)),
+    icsInfo),
   sectionData,
   scaleFactorData,
   data('pulse_data_present', u(1)),
-  when(equals('pulse_data_present', 1), pulseData),
+  when(equals('pulse_data_present', 1),
+    pulseData),
   data('tns_data_present', u(1)),
-  when(equals('tns_data_present', 1), tnsData),
+  when(equals('tns_data_present', 1),
+    tnsData),
   data('gain_control_data_present', u(1)),
-  when(equals('gain_control_data_present', 1), gainControlData),
+  when(equals('gain_control_data_present', 1),
+    gainControlData),
   spectralData
 ]);
 
@@ -487,155 +488,146 @@ const elemTypes = [
   'end'
 ];
 
-const elemParsers = [
-  list([ // single_channel_element
-    data('element_instance_tag', u(4)),
-    individualChannelStream
-  ]),
-  list([ // channel_pair_element
-    data('element_instance_tag', u(4)),
-    data('common_window', u(1)),
-    when(equals('common_window', 1), list([
-        icsInfo,
-        data('ms_mask_present', u(2)),
-        when(equals('ms_mask_present', 1), readMsMask)
-      ])),
-    newObj('ics_1', list([
-      data('type', val('individual_channel_stream')),
-       individualChannelStream
-      ])),
-    newObj('ics_2', list([
-      data('type', val('individual_channel_stream')),
-       individualChannelStream
-      ])),
-  ]),
-  noop, // coupling_channel_element
-  list([ // lfe_channel_element
-    data('element_instance_tag', u(4)),
-    individualChannelStream
-  ]),
-  list([ // data_stream_element
-    data('element_instance_tag', u(4)),
-    data('data_byte_align_flag', u(1)),
-    data('count', u(8)),
-    data('esc_count', val(0)),
-    when(equals('count', 255),
-      data('esc_count', u(8))),
-    when(equals('data_byte_align_flag', 1),
-      data('byte_alignment_bits', byteAlign)),
-    each((index, options) => {
+const singleChannelElem = list([
+  data('element_instance_tag', u(4)),
+  individualChannelStream
+]);
+
+const channelPairElem = list([
+  data('element_instance_tag', u(4)),
+  data('common_window', u(1)),
+  when(equals('common_window', 1),
+    icsInfo,
+    data('ms_mask_present', u(2)),
+    when(equals('ms_mask_present', 1), readMsMask)),
+  newObj('ics_1',
+    data('type', val('individual_channel_stream')),
+     individualChannelStream),
+  newObj('ics_2',
+    data('type', val('individual_channel_stream')),
+     individualChannelStream),
+]);
+
+const couplingChannelElem = noop;
+
+const lfeChannelElem = list([
+  data('element_instance_tag', u(4)),
+  individualChannelStream
+]);
+
+const dataStreamElem = list([
+  data('element_instance_tag', u(4)),
+  data('data_byte_align_flag', u(1)),
+  data('count', u(8)),
+  data('esc_count', val(0)),
+  when(equals('count', 255),
+    data('esc_count', u(8))),
+  when(equals('data_byte_align_flag', 1),
+    data('byte_alignment_bits', byteAlign)),
+  each((index, options) => {
       return index < options.count + options.esc_count;
-    }, data('data_stream_byte[]', u(8)))
-  ]),
-  list([ // program_config_element
-    data('element_instance_tag', u(4)),
-    data('profile', u(2)),
-    data('sampling_frequency_index', u(4)),
-    data('num_front_channel_elements', u(4)),
-    data('num_side_channel_elements', u(4)),
-    data('num_back_channel_elements', u(4)),
-    data('num_lfe_channel_elements', u(2)),
-    data('num_assoc_data_elements', u(3)),
-    data('num_valid_cc_elements', u(4)),
-    data('mono_mixdown_present', u(1)),
-    when(equals('mono_mixdown_present', 1),
-      data('mono_mixdown_element_number', u(4))),
-    data('stereo_mixdown_present', u(1)),
-    when(equals('stereo_mixdown_present', 1),
-      data('stereo_mixdown_element_number', u(4))),
-    data('matrix_mixdown_idx_present', u(1)),
-    when(equals('matrix_mixdown_idx_present', 1), list([
-      data('matrix_mixdown_idx', u(2)),
-      data('pseudo_surround_enable', u(1))
-    ])),
-    each((index, options) => {
+    },
+    data('data_stream_byte[]', u(8)))
+]);
+
+const programConfigElem = list([
+  data('element_instance_tag', u(4)),
+  data('profile', u(2)),
+  data('sampling_frequency_index', u(4)),
+  data('num_front_channel_elements', u(4)),
+  data('num_side_channel_elements', u(4)),
+  data('num_back_channel_elements', u(4)),
+  data('num_lfe_channel_elements', u(2)),
+  data('num_assoc_data_elements', u(3)),
+  data('num_valid_cc_elements', u(4)),
+  data('mono_mixdown_present', u(1)),
+  when(equals('mono_mixdown_present', 1),
+    data('mono_mixdown_element_number', u(4))),
+  data('stereo_mixdown_present', u(1)),
+  when(equals('stereo_mixdown_present', 1),
+    data('stereo_mixdown_element_number', u(4))),
+  data('matrix_mixdown_idx_present', u(1)),
+  when(equals('matrix_mixdown_idx_present', 1),
+    data('matrix_mixdown_idx', u(2)),
+    data('pseudo_surround_enable', u(1))),
+  each((index, options) => {
       return index < options.num_front_channel_elements;
-    }, list([
-      data('front_element_is_cpe[]', u(1)),
-      data('front_element_tag_select[]', u(4))
-    ])),
-    each((index, options) => {
+    },
+    data('front_element_is_cpe[]', u(1)),
+    data('front_element_tag_select[]', u(4))),
+  each((index, options) => {
       return index < options.num_side_channel_elements;
-    }, list([
-      data('side_element_is_cpe[]', u(1)),
-      data('side_element_tag_select[]', u(4))
-    ])),
-    each((index, options) => {
+    },
+    data('side_element_is_cpe[]', u(1)),
+    data('side_element_tag_select[]', u(4))),
+  each((index, options) => {
       return index < options.num_back_channel_elements;
-    }, list([
-      data('back_element_is_cpe[]', u(1)),
-      data('back_element_tag_select[]', u(4))
-    ])),
-    each((index, options) => {
+    },
+    data('back_element_is_cpe[]', u(1)),
+    data('back_element_tag_select[]', u(4))),
+  each((index, options) => {
       return index < options.num_lfe_channel_elements;
-    }, data('lfe_element_tag_select[]', u(4))),
-    each((index, options) => {
+    },
+    data('lfe_element_tag_select[]', u(4))),
+  each((index, options) => {
       return index < options.num_assoc_data_elements;
-    }, data('assoc_data_element_tag_select[]', u(4))),
-    each((index, options) => {
+    },
+    data('assoc_data_element_tag_select[]', u(4))),
+  each((index, options) => {
       return index < options.num_valid_cc_elements;
-    }, list([
-      data('cc_element_is_ind_sw[]', u(1)),
-      data('valid_cc_element_tag_select[]', u(4))
-    ])),
-    data('byte_alignment_bits', byteAlign()),
-    data('comment_field_bytes', u(8)),
-    each((index, options) => {
+    },
+    data('cc_element_is_ind_sw[]', u(1)),
+    data('valid_cc_element_tag_select[]', u(4))),
+  data('byte_alignment_bits', byteAlign()),
+  data('comment_field_bytes', u(8)),
+  each((index, options) => {
       return index < options.comment_field_bytes;
-    }, data('comment_field_data[]', u(8)))
-  ]),
-  list([ // fill_element
-    data('count', u(4)),
-    data('esc_count', val(0)),
-    when(equals('count', 15),
-      data('esc_count', u(8))),
-    each((index, options) => {
-      return index < options.count + options.esc_count - 1;
-    }, data('fill_byte[]', u(8)))
-  ]),
-  list([ // end
-    data('byte_alignment_bits', byteAlign())
-  ])
-];
+    },
+    data('comment_field_data[]', u(8)))
+]);
+
+const fillElem = list([
+  data('count', u(4)),
+  data('esc_count', val(0)),
+  when(equals('count', 15),
+    data('esc_count', u(8))),
+  each((index, options) => {
+    return index < options.count + options.esc_count - 1;
+  },
+  data('fill_byte[]', u(8)))
+]);
+
+const endElem = list([
+  data('byte_alignment_bits', byteAlign())
+]);
 
 export const aacCodec = start('elements', whileMoreData(
   newObj('elements[]',
-    list([
-      data('id_syn_ele', u(3)),
-      when(equals('id_syn_ele', 0), list([
-        data('type', val(elemTypes[0])),
-        elemParsers[0]
-      ])),
-      when(equals('id_syn_ele', 1), list([
-        data('type', val(elemTypes[1])),
-        elemParsers[1]
-      ])),
-      when(equals('id_syn_ele', 2), list([
-        data('type', val(elemTypes[2])),
-        elemParsers[2]
-      ])),
-      when(equals('id_syn_ele', 3), list([
-        data('type', val(elemTypes[3])),
-        elemParsers[3]
-      ])),
-      when(equals('id_syn_ele', 4), list([
-        data('type', val(elemTypes[4])),
-        elemParsers[4]
-      ])),
-      when(equals('id_syn_ele', 5), list([
-        data('type', val(elemTypes[5])),
-        elemParsers[5]
-      ])),
-      when(equals('id_syn_ele', 6), list([
-        data('type', val(elemTypes[6])),
-        elemParsers[6]
-      ])),
-      when(equals('id_syn_ele', 7), list([
-        data('type', val(elemTypes[7])),
-        elemParsers[7]
-      ]))
-    ])
-)));
+    data('id_syn_ele', u(3)),
+    when(equals('id_syn_ele', 0),
+      data('type', val(elemTypes[0])),
+      singleChannelElem),
+    when(equals('id_syn_ele', 1),
+      data('type', val(elemTypes[1])),
+      channelPairElem),
+    when(equals('id_syn_ele', 2),
+      data('type', val(elemTypes[2])),
+      couplingChannelElem),
+    when(equals('id_syn_ele', 3),
+      data('type', val(elemTypes[3])),
+      lfeChannelElem),
+    when(equals('id_syn_ele', 4),
+      data('type', val(elemTypes[4])),
+      dataStreamElem),
+    when(equals('id_syn_ele', 5),
+      data('type', val(elemTypes[5])),
+      programConfigElem),
+    when(equals('id_syn_ele', 6),
+      data('type', val(elemTypes[6])),
+      fillElem),
+    when(equals('id_syn_ele', 7),
+      data('type', val(elemTypes[7])),
+      endElem))));
 
 const adts_error_check = when(equals('protection_absent', 0), data('crc_check', u(16)));
 
@@ -643,11 +635,12 @@ const adts_header_error_check = list([
   when(equals('protection_absent', 0),
     each((index, options, output) => {
       return index < output.number_of_raw_data_blocks_in_frame;
-    }, data('raw_data_block_position[]', u(16)))),
+    },
+    data('raw_data_block_position[]', u(16)))),
   adts_error_check
 ]);
 
-export const adtsCodec = start('adts_frame', list([
+export const adtsCodec = start('adts_frame',
   data('sync_word', u(12)),
   data('ID', u(1)),
   data('layer', u(2)),
@@ -663,17 +656,13 @@ export const adtsCodec = start('adts_frame', list([
   data('aac_frame_length', u(13)),
   data('adts_buffer_fullness', u(11)),
   data('number_of_raw_data_blocks_in_frame', u(2)),
-  when(equals('number_of_raw_data_blocks_in_frame', 0), list([
+  when(equals('number_of_raw_data_blocks_in_frame', 0),
     adts_error_check,
-    aacCodec
-  ])),
-  when(not(equals('number_of_raw_data_blocks_in_frame', 0)), list([
+    aacCodec),
+  when(not(equals('number_of_raw_data_blocks_in_frame', 0)),
     adts_header_error_check,
     each((index, options, output) => {
       return index <= output.number_of_raw_data_blocks_in_frame;
-    }, list([
-      newObj('frames[]', aacCodec),
-      adts_error_check
-    ]))
-  ])),
-]));
+    },
+    newObj('frames[]', aacCodec),
+    adts_error_check)));

@@ -1,6 +1,36 @@
 'use strict';
+import {list} from './list';
 
-export const when = function (conditionFn, parseFn) {
+const nameHandler = function (name) {
+  let nameSplit = name.split(/\[(\d*)\]/);
+  let property = nameSplit[0];
+  let indexOverride;
+  let nameArray;
+
+  // The `nameSplit` array can either be 1 or 3 long
+  if (nameSplit && nameSplit[0] !== '') {
+    if (nameSplit.length > 1) {
+      nameArray = true;
+      indexOverride = parseFloat(nameSplit[1]);
+
+      if (isNaN(indexOverride)) {
+        indexOverride = undefined;
+      }
+    }
+  } else {
+    throw new Error('ExpGolombError: Invalid name "' + name + '".');
+  }
+
+  return {
+    property,
+    indexOverride,
+    nameArray
+  };
+};
+
+export const when = function (conditionFn, ...parseFns) {
+  const parseFn = list(parseFns);
+
   return {
     decode: (expGolomb, output, options, index) => {
       if (conditionFn(output, options, index)) {
@@ -17,7 +47,9 @@ export const when = function (conditionFn, parseFn) {
   };
 };
 
-export const each = function (conditionFn, parseFn) {
+export const each = function (conditionFn, ...parseFns) {
+  const parseFn = list(parseFns);
+
   return {
     decode: (expGolomb, output, options) => {
       let index = 0;
@@ -151,7 +183,9 @@ export const every = function (conditionFns) {
   };
 };
 
-export const whenMoreData = function (parseFn) {
+export const whenMoreData = function (...parseFns) {
+  const parseFn = list(parseFns);
+
   return {
     decode: (expGolomb, output, options, index) => {
       if (expGolomb.bitReservoir.length) {
@@ -166,7 +200,9 @@ export const whenMoreData = function (parseFn) {
 };
 
 
-export const whileMoreData = function (parseFn) {
+export const whileMoreData = function (...parseFns) {
+  const parseFn = list(parseFns);
+
   return {
     decode: (expGolomb, output, options) => {
       let index = 0;
