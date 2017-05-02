@@ -64,7 +64,6 @@ Thumbcoil supports the parsing of the following AAC stream elements:
 
 * `single_channel_element`
 * `channel_pair_element`
-* `coupling_channel_element`
 * `lfe_channel_element`
 * `data_stream_element`
 * `program_config_element`
