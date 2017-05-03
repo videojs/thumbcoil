@@ -52,9 +52,16 @@ export const validateContainers = (esMap) => {
       `Detected ${invalidPid0Packets.length} packets with pid 0 and a non-PAT type`);
   }
 
-  // we only parse the first PMT PID from the PAT, but we can check for extra programs
-  // by seeing if there are PMTs with different IDs
+  const patsWithExtraPrograms =
+    esMap.filter((esEl) => esEl.type === 'pat' && esEl.table.length > 1);
 
+  if (patsWithExtraPrograms.length > 0) {
+    errors.push(
+      `Detected ${patsWithExtraPrograms.length} PAT packets with more than one program`);
+  }
+
+  // we only parse the first PMT PID from the PAT, so we can also check for extra programs
+  // by seeing if there are PMTs with different IDs
   const pmtPackets = esMap.filter((esEl) => esEl.type === 'pmt');
   const pmtPids = Array.from(new Set(pmtPackets.map((packet) => packet.pid)));
 
