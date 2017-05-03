@@ -87,9 +87,18 @@ export const validateContainers = (esMap) => {
     warnings.push(`Detected ${audioTracks.length} audio tracks (more than preferred 1)`);
   }
 
-  // TODO
-  // WARNINGS
-  // unsupported codecs
+  if (audioTracks.length >= 1) {
+    const audioCodecs =
+      Array.from(new Set(audioTracks.map((audioTrack) => audioTrack.codec)));
+    const unsupportedAudioCodecs =
+      audioCodecs.filter((audioCodec) => audioCodec !== 'adts');
+
+    if (unsupportedAudioCodecs.length > 0) {
+      warnings.push(
+        `Detected unsuported audio codec(s) ${unsupportedAudioCodecs.join(', ')} ` +
+        `(we only support AAC, determined by presence of ADTS)`);
+    }
+  }
 
   return {
     warnings,
