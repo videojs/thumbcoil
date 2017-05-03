@@ -40,7 +40,6 @@ export const validateContainers = (esMap) => {
   const unknownFrames = esMap.filter((esEl) => esEl.type.startsWith('unknown-'));
 
   if (unknownFrames.length > 0) {
-    // TODO determine if there are any unsupported codecs
     warnings.push(`Detected ${unknownFrames.length} frames with unknown types`);
   }
 
@@ -98,6 +97,36 @@ export const validateContainers = (esMap) => {
         `Detected unsuported audio codec(s) ${unsupportedAudioCodecs.join(', ')} ` +
         `(we only support AAC, determined by presence of ADTS)`);
     }
+  }
+
+  const videoTracks = tracks.filter((track) => track.type === 'video');
+
+  if (videoTracks.length === 0) {
+    warnings.push('No video track detected');
+  }
+
+  if (videoTracks.length > 1) {
+    warnings.push(`Detected ${videoTracks.length} video tracks (more than preferred 1)`);
+  }
+
+  if (videoTracks.length >= 1) {
+    const videoCodecs =
+      Array.from(new Set(videoTracks.map((videoTrack) => videoTrack.codec)));
+    const unsupportedVideoCodecs =
+      videoCodecs.filter((videoCodec) => videoCodec !== 'avc');
+
+    if (unsupportedVideoCodecs.length > 0) {
+      warnings.push(
+        `Detected unsuported video codec(s) ${unsupportedVideoCodecs.join(', ')} ` +
+        `(we only support AVC)`);
+    }
+  }
+
+  const unsupportedTracks =
+    tracks.filter((track) => !['video', 'audio', 'metadata'].includes(track.type));
+
+  if (unsupportedTracks.length > 0) {
+    warnings.push('Detected unsupported track types');
   }
 
   return {
