@@ -37,10 +37,10 @@ export const validateContainers = (esMap) => {
     warnings.push('Video has no I frames');
   }
 
-  const unknownFrames = esMap.filter((esEl) => esEl.type.startsWith('unknown-'));
+  const unknownPackets = esMap.filter((esEl) => esEl.type.startsWith('unknown-'));
 
-  if (unknownFrames.length > 0) {
-    warnings.push(`Detected ${unknownFrames.length} frames with unknown types`);
+  if (unknownPackets.length > 0) {
+    warnings.push(`Detected ${unknownPackets.length} packets with unknown types`);
   }
 
   const pid0Packets = esMap.filter((esEl) => esEl.pid === 0);
