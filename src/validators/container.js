@@ -65,8 +65,13 @@ export const validateContainers = (esMap) => {
 
   let tracks = [];
 
+  // find tracks with unique IDs
   pmtPackets.forEach((pmtPacket) => {
-    tracks = tracks.concat(pmtPacket.tracks);
+    pmtPacket.tracks.forEach((track) => {
+      if (tracks.filter((seenTrack) => seenTrack.id === track.id).length === 0) {
+        tracks.push(track);
+      }
+    });
   });
 
   const audioTracks = tracks.filter((track) => track.type === 'audio');
