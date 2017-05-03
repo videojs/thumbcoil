@@ -74,7 +74,7 @@ export const validateContainers = (esMap) => {
   // find tracks with unique IDs
   pmtPackets.forEach((pmtPacket) => {
     pmtPacket.tracks.forEach((track) => {
-      if (tracks.filter((seenTrack) => seenTrack.id === track.id).length === 0) {
+      if (!tracks.find((seenTrack) => seenTrack.id === track.id)) {
         tracks.push(track);
       }
     });
@@ -94,7 +94,7 @@ export const validateContainers = (esMap) => {
 
     if (unsupportedAudioCodecs.length > 0) {
       warnings.push(
-        `Detected unsuported audio codec(s) ${unsupportedAudioCodecs.join(', ')} ` +
+        `Detected unsupported audio codec(s) ${unsupportedAudioCodecs.join(', ')} ` +
         `(we only support AAC, determined by presence of ADTS)`);
     }
   }
@@ -117,7 +117,7 @@ export const validateContainers = (esMap) => {
 
     if (unsupportedVideoCodecs.length > 0) {
       warnings.push(
-        `Detected unsuported video codec(s) ${unsupportedVideoCodecs.join(', ')} ` +
+        `Detected unsupported video codec(s) ${unsupportedVideoCodecs.join(', ')} ` +
         `(we only support AVC)`);
     }
   }

@@ -151,9 +151,10 @@ const parseTransportStreamPackets = function(packets) {
     pat.table = {};
 
     // 4 bytes per section
-    for (let i = 8; i - 8 < tableBits / 8; i += 4) {
-      const programNumber = (payload[i] << 8) | payload[i + 1];
-      const pid = ((payload[i + 2] & 0b00011111) << 8) | payload[i + 3];
+    for (let i = 0; i < tableBits / 8; i += 4) {
+      const byteIndex = i + 8;
+      const programNumber = (payload[byteIndex] << 8) | payload[byteIndex + 1];
+      const pid = ((payload[byteIndex + 2] & 0b00011111) << 8) | payload[byteIndex + 3];
 
       pat.table[programNumber] = pid;
     }
