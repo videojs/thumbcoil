@@ -137,9 +137,27 @@ const parseTransportStreamPackets = function(packets) {
   const parsePat = function(packet) {
     let pat = packet.content;
     let payload = pat.data;
+    let sectionLength = (payload[1] & 0x0F) << 8 | payload[2];
+    let tableBits = sectionLength * 8;
 
-    pat.sectionNumber = payload[7]; // eslint-disable-line camelcase
-    pat.lastSectionNumber = payload[8]; // eslint-disable-line camelcase
+    // subtract bits past section length before table
+    tableBits -= 40;
+    // subtract ending CRC_32 bits
+    tableBits -= 32;
+
+    pat.sectionNumber = payload[6]; // eslint-disable-line camelcase
+    pat.lastSectionNumber = payload[7]; // eslint-disable-line camelcase
+
+    pat.table = {};
+
+    // 4 bytes per section
+    for (let i = 0; i < tableBits / 8; i += 4) {
+      const byteIndex = i + 8;
+      const programNumber = (payload[byteIndex] << 8) | payload[byteIndex + 1];
+      const pid = ((payload[byteIndex + 2] & 0b00011111) << 8) | payload[byteIndex + 3];
+
+      pat.table[programNumber] = pid;
+    }
 
     // skip the PSI header and parse the first PMT entry
     pmtPid = (payload[10] & 0x1F) << 8 | payload[11];
@@ -375,6 +393,7 @@ const parsePesPackets = function(packets) {
         lastSectionNumber: pat.lastSectionNumber,
         tsPacketIndices: [packetIndex],
         pmtPid: pat.pmtPid,
+        table: pat.table,
         data: pat.data
       });
     },
