@@ -51,12 +51,12 @@ export const validateContainers = (esMap) => {
       `Detected ${invalidPid0Packets.length} packets with pid 0 and a non-PAT type`);
   }
 
-  const patsWithExtraPrograms =
-    esMap.filter((esEl) => esEl.type === 'pat' && esEl.table.length > 1);
+  const multiProgramPats =
+    esMap.filter((esEl) => esEl.type === 'pat' && Object.keys(esEl.table).length > 1);
 
-  if (patsWithExtraPrograms.length > 0) {
+  if (multiProgramPats.length > 0) {
     errors.push(
-      `Detected ${patsWithExtraPrograms.length} PAT packets with more than one program`);
+      `Detected ${multiProgramPats.length} PAT packet(s) with more than one program`);
   }
 
   // we only parse the first PMT PID from the PAT, so we can also check for extra programs
