@@ -1,6 +1,7 @@
 'use strict';
 
-import {list, data} from '../../lib/combinators';
+import {data} from '../../lib/combinators';
+import {list} from '../../lib/list';
 import {u, ue} from '../../lib/data-types';
 import {each} from '../../lib/conditionals';
 

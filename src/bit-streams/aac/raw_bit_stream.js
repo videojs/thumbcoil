@@ -1,5 +1,6 @@
 import {ExpGolombDecoder, ExpGolombEncoder} from '../../lib/exp-golomb-string';
-import {start, startArray, list, data, debug, verify, newObj} from '../../lib/combinators';
+import {start, startArray, data, debug, verify, newObj} from '../../lib/combinators';
+import {list} from '../../lib/list';
 import {when, each, inArray, equals, some, every, not, whileMoreData, gt} from '../../lib/conditionals';
 import {ue, u, se, val, byteAlign} from '../../lib/data-types';
 import {
@@ -61,7 +62,7 @@ const bit_set = function (val, bit) {
 }
 
 const doPostIcsInfoCalculation = {
-  decode: (expGolomb, output, options, index) => {
+  decode: ({expGolomb, output, options}) => {
     let fs_index = options.sampling_frequency_index;
 
     if (output.window_sequence === EIGHT_SHORT_SEQUENCE) {
@@ -119,7 +120,7 @@ const doPostIcsInfoCalculation = {
 };
 
 const sectionData = {
-  decode: (expGolomb, output, options, index) => {
+  decode: ({expGolomb, output, options}) => {
     let bits = 5;
     if (output.window_sequence === EIGHT_SHORT_SEQUENCE) {
       bits = 3;
@@ -168,7 +169,7 @@ const sectionData = {
 };
 
 const scaleFactorData = {
-  decode: (expGolomb, output, options, index) => {
+  decode: ({expGolomb, output, options}) => {
     output.scale_factors =[];
 
     for (let g = 0; g < output.num_window_groups; g++) {
@@ -185,7 +186,7 @@ const scaleFactorData = {
 };
 
 const tnsData = {
-  decode: (expGolomb, output, options, index) => {
+  decode: ({expGolomb, output, options}) => {
     output.n_filt = [];
     output.coef_res = [];
     output.length = [];
@@ -227,7 +228,7 @@ const tnsData = {
 };
 
 const gainControlData = {
-  decode: (expGolomb, output, options, index) =>{
+  decode: ({expGolomb, output, options}) =>{
     output.max_band = expGolomb.readBits(2);
     output.adjust_num = [];
     output.alevcode = [];
@@ -364,7 +365,7 @@ const readEscValue = function (expGolomb) {
 };
 
 const spectralData = {
-  decode: (expGolomb, output, options, index) => {
+  decode: ({expGolomb, output, options}) => {
     output.spectral_data = [];
     for (let g = 0; g < output.num_window_groups; g++) {
       output.spectral_data[g] = [];
@@ -411,7 +412,7 @@ const spectralData = {
 };
 
 const readMsMask ={
-  decode: (expGolomb, output, options, index) => {
+  decode: ({expGolomb, output, options}) => {
     output.ms_used = [];
 
     for (let g = 0; g < output.num_window_groups; g++) {
@@ -476,17 +477,6 @@ const individualChannelStream = list([
 ]);
 
 const noop = {decode:()=>{}};
-
-const elemTypes = [
-  'single_channel_element',
-  'channel_pair_element',
-  'coupling_channel_element',
-  'lfe_channel_element',
-  'data_stream_element',
-  'program_config_element',
-  'fill_element',
-  'end'
-];
 
 const singleChannelElem = list([
   data('element_instance_tag', u(4)),
@@ -598,35 +588,36 @@ const fillElem = list([
 ]);
 
 const endElem = list([
-  data('byte_alignment_bits', byteAlign())
+  data('byte_alignment_bits', byteAlign()),
+  verify('aac')
 ]);
 
 export const aacCodec = start('elements', whileMoreData(
   newObj('elements[]',
     data('id_syn_ele', u(3)),
     when(equals('id_syn_ele', 0),
-      data('type', val(elemTypes[0])),
+      data('type', val('single_channel_element')),
       singleChannelElem),
     when(equals('id_syn_ele', 1),
-      data('type', val(elemTypes[1])),
+      data('type', val('channel_pair_element')),
       channelPairElem),
     when(equals('id_syn_ele', 2),
-      data('type', val(elemTypes[2])),
+      data('type', val('coupling_channel_element')),
       couplingChannelElem),
     when(equals('id_syn_ele', 3),
-      data('type', val(elemTypes[3])),
+      data('type', val('lfe_channel_element')),
       lfeChannelElem),
     when(equals('id_syn_ele', 4),
-      data('type', val(elemTypes[4])),
+      data('type', val('data_stream_element')),
       dataStreamElem),
     when(equals('id_syn_ele', 5),
-      data('type', val(elemTypes[5])),
+      data('type', val('program_config_element')),
       programConfigElem),
     when(equals('id_syn_ele', 6),
-      data('type', val(elemTypes[6])),
+      data('type', val('fill_element')),
       fillElem),
     when(equals('id_syn_ele', 7),
-      data('type', val(elemTypes[7])),
+      data('type', val('end')),
       endElem))));
 
 const adts_error_check = when(equals('protection_absent', 0), data('crc_check', u(16)));

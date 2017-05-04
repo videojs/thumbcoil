@@ -1,221 +1,214 @@
 'use strict';
 import {list} from './list';
-
-const nameHandler = function (name) {
-  let nameSplit = name.split(/\[(\d*)\]/);
-  let property = nameSplit[0];
-  let indexOverride;
-  let nameArray;
-
-  // The `nameSplit` array can either be 1 or 3 long
-  if (nameSplit && nameSplit[0] !== '') {
-    if (nameSplit.length > 1) {
-      nameArray = true;
-      indexOverride = parseFloat(nameSplit[1]);
-
-      if (isNaN(indexOverride)) {
-        indexOverride = undefined;
-      }
-    }
-  } else {
-    throw new Error('ExpGolombError: Invalid name "' + name + '".');
-  }
-
-  return {
-    property,
-    indexOverride,
-    nameArray
-  };
-};
+import {propertyHandler} from './property-handler';
+import {getProperty, indexArrayMerge} from './property-helpers';
 
 export const when = function (conditionFn, ...parseFns) {
-  const parseFn = list(parseFns);
+  const parseFn = list(parseFns, true);
 
   return {
-    decode: (expGolomb, output, options, index) => {
-      if (conditionFn(output, options, index)) {
-        return parseFn.decode(expGolomb, output, options, index);
+    decode: ({expGolomb, output, options, indexes, path}) => {
+      const newPath = path.concat('[when]');
+
+      if (conditionFn(output, options, indexes)) {
+        return parseFn.decode({
+          expGolomb,
+          output,
+          options,
+          indexes,
+          path: newPath
+        });
       }
 
       return output;
     },
-    encode: (expGolomb, input, options, index) => {
-      if (conditionFn(input, options, index)) {
-        parseFn.encode(expGolomb, input, options, index);
+    encode: ({expGolomb, input, options, indexes, path}) => {
+      const newPath = path.concat('[when]');
+
+      if (conditionFn(input, options, indexes)) {
+        parseFn.encode({
+          expGolomb,
+          input,
+          options,
+          indexes,
+          path: newPath
+        });
       }
     }
   };
 };
 
 export const each = function (conditionFn, ...parseFns) {
-  const parseFn = list(parseFns);
+  const parseFn = list(parseFns, true);
 
   return {
-    decode: (expGolomb, output, options) => {
-      let index = 0;
+    decode: ({expGolomb, output, options, indexes, path}) => {
+      const newPath = path.concat('[each]');
+      const indexSlot = indexes.length;
 
-      while (conditionFn(index, output, options)) {
-        parseFn.decode(expGolomb, output, options, index);
-        index++;
+      // Add a new index slot for this loop
+      indexes[indexSlot] = 0;
+
+      while (conditionFn(indexes[indexSlot], output, options)) {
+        parseFn.decode({
+          expGolomb,
+          output,
+          options,
+          indexes,
+          path: newPath
+        });
+        indexes[indexSlot]++;
       }
+      // Remove the index slot from the list of indexes
+      indexes.length = indexSlot;
 
       return output;
     },
-    encode: (expGolomb, input, options) => {
-      let index = 0;
+    encode: ({expGolomb, input, options, indexes, path}) => {
+      const newPath = path.concat('[each]');
+      const indexSlot = indexes.length;
 
-      while (conditionFn(index, input, options)) {
-        parseFn.encode(expGolomb, input, options, index);
-        index++;
+      // Add a new index slot for this loop
+      indexes[indexSlot] = 0;
+
+      while (conditionFn(indexes[indexSlot], input, options)) {
+        parseFn.encode({
+          expGolomb,
+          input,
+          options,
+          indexes,
+          path: newPath
+        });
+        indexes[indexSlot]++;
       }
+      // Remove the index slot from the list of indexes
+      indexes.length = indexSlot;
     }
   };
 };
 
 export const inArray = function (name, array) {
-  let nameSplit = name.split(/\[(\d*)\]/);
-  let property = nameSplit[0];
-  let indexOverride;
-  let nameArray;
+  const {propertyName, indexArray} = propertyHandler(name);
 
-  // The `nameSplit` array can either be 1 or 3 long
-  if (nameSplit && nameSplit[0] !== '') {
-    if (nameSplit.length > 1) {
-      nameArray = true;
-      indexOverride = parseFloat(nameSplit[1]);
-
-      if (isNaN(indexOverride)) {
-        indexOverride = undefined;
-      }
-    }
-  } else {
-    throw new Error('ExpGolombError: Invalid name "' + name + '".');
-  }
-
-  return (obj, options, index) => {
-    if (nameArray) {
-      return (obj[property] && array.indexOf(obj[property][index]) !== -1) ||
-        (options[property] && array.indexOf(options[property][index]) !== -1);
+  return (obj, options, indexes) => {
+    if (indexArray) {
+      return array.indexOf(getProperty(obj, options, propertyName, indexArrayMerge(indexes, indexArray))) !== -1;
     } else {
-      return array.indexOf(obj[property]) !== -1 ||
-        array.indexOf(options[property]) !== -1;
+      return array.indexOf(obj[propertyName]) !== -1 ||
+        array.indexOf(options[propertyName]) !== -1;
     }
   };
 };
 
 export const equals = function (name, value) {
-  let nameSplit = name.split(/\[(\d*)\]/);
-  let property = nameSplit[0];
-  let indexOverride;
-  let nameArray;
+  const {propertyName, indexArray} = propertyHandler(name);
 
-  // The `nameSplit` array can either be 1 or 3 long
-  if (nameSplit && nameSplit[0] !== '') {
-    if (nameSplit.length > 1) {
-      nameArray = true;
-      indexOverride = parseFloat(nameSplit[1]);
-
-      if (isNaN(indexOverride)) {
-        indexOverride = undefined;
-      }
-    }
-  } else {
-    throw new Error('ExpGolombError: Invalid name "' + name + '".');
-  }
-
-  return (obj, options, index) => {
-    if (nameArray) {
-      return (obj[property] && obj[property][index] === value) ||
-        (options[property] && options[property][index] === value);
+  return (obj, options, indexes) => {
+    if (indexArray) {
+      return getProperty(obj, options, propertyName, indexArrayMerge(indexes, indexArray)) === value;
     } else {
-      return obj[property] === value ||
-        options[property] === value;
+      return obj[propertyName] === value ||
+        options[propertyName] === value;
     }
   };
 };
 
 export const gt = function (name, value) {
-  let nameSplit = name.split(/\[(\d*)\]/);
-  let property = nameSplit[0];
-  let indexOverride;
-  let nameArray;
+  const {propertyName, indexArray} = propertyHandler(name);
 
-  // The `nameSplit` array can either be 1 or 3 long
-  if (nameSplit && nameSplit[0] !== '') {
-    if (nameSplit.length > 1) {
-      nameArray = true;
-      indexOverride = parseFloat(nameSplit[1]);
-
-      if (isNaN(indexOverride)) {
-        indexOverride = undefined;
-      }
-    }
-  } else {
-    throw new Error('ExpGolombError: Invalid name "' + name + '".');
-  }
-
-  return (obj, options, index) => {
-    if (nameArray) {
-      return (obj[property] && obj[property][index] > value) ||
-        (options[property] && options[property][index] > value);
+  return (obj, options, indexes) => {
+    if (indexArray) {
+      return getProperty(obj, options, propertyName, indexArrayMerge(indexes, indexArray)) === value;
     } else {
-      return obj[property] > value ||
-        options[property] > value;
+      return obj[propertyName] > value ||
+        options[propertyName] > value;
     }
   };
 };
 
 export const not = function (fn) {
-  return (obj, options, index) => {
-    return !fn(obj, options, index);
+  return (obj, options, indexes) => {
+    return !fn(obj, options, indexes);
   };
 };
 
 export const some = function (conditionFns) {
-  return (obj, options, index) => {
-    return conditionFns.some((fn)=>fn(obj, options, index));
+  return (obj, options, indexes) => {
+    return conditionFns.some((fn)=>fn(obj, options, indexes));
   };
 };
 
 export const every = function (conditionFns) {
-  return (obj, options, index) => {
-    return conditionFns.every((fn)=>fn(obj, options, index));
+  return (obj, options, indexes) => {
+    return conditionFns.every((fn)=>fn(obj, options, indexes));
   };
 };
 
 export const whenMoreData = function (...parseFns) {
-  const parseFn = list(parseFns);
+  const parseFn = list(parseFns, true);
 
   return {
-    decode: (expGolomb, output, options, index) => {
+    decode: ({expGolomb, output, options, indexes, path}) => {
+      const newPath = path.concat('[whenMoreData]');
+
       if (expGolomb.bitReservoir.length) {
-        return parseFn.decode(expGolomb, output, options, index);
+        return parseFn.decode({
+          expGolomb,
+          output,
+          options,
+          indexes,
+          path: newPath
+        });
       }
       return output;
     },
-    encode: (expGolomb, input, options, index) => {
-      parseFn.encode(expGolomb, input, options, index);
+    encode: ({expGolomb, input, options, indexes, path}) => {
+      const newPath = path.concat('[whenMoreData]');
+
+      parseFn.encode({
+        expGolomb,
+        input,
+        options,
+        indexes,
+        path: newPath
+      });
     }
   };
 };
 
-
 export const whileMoreData = function (...parseFns) {
-  const parseFn = list(parseFns);
+  const parseFn = list(parseFns, true);
 
   return {
-    decode: (expGolomb, output, options) => {
-      let index = 0;
+    decode: ({expGolomb, output, options, indexes, path}) => {
+      const newPath = path.concat('[whileMoreData]');
+      const indexSlot = indexes.length;
+
+      // Add a new index slot for this loop
+      indexes[indexSlot] = 0;
 
       while (expGolomb.bitReservoir.length) {
-        parseFn.decode(expGolomb, output, options, index);
-        index++;
+        parseFn.decode({
+          expGolomb,
+          output,
+          options,
+          indexes,
+          path: newPath
+        });
+        indexes[indexSlot]++;
       }
+      // Remove the index slot from the list of indexes
+      indexes.length = indexSlot;
 
       return output;
     },
-    encode: (expGolomb, input, options) => {
-      let index = 0;
+    encode: ({expGolomb, input, options, indexes, path}) => {
+      const newPath = path.concat('[whenMoreData]');
+      const indexSlot = indexes.length;
+
+      // Add a new index slot for this loop
+      indexes[indexSlot] = 0;
+
       let length = 0;
 
       if (Array.isArray(input)) {
@@ -223,9 +216,17 @@ export const whileMoreData = function (...parseFns) {
       }
 
       while (index < length) {
-        parseFn.encode(expGolomb, input, options, index);
-        index++;
+        parseFn.encode({
+          expGolomb,
+          input,
+          options,
+          indexes,
+          path: newPath
+        });
+        indexes[indexSlot]++;
       }
+      // Remove the index slot from the list of indexes
+      indexes.length = indexSlot;
     }
   };
 };

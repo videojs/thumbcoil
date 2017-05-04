@@ -1,7 +1,8 @@
 'use strict';
 
 import {ExpGolombDecoder, ExpGolombEncoder} from '../../lib/exp-golomb-string';
-import {start, startArray, list, data, debug, verify, newObj} from '../../lib/combinators';
+import {start, startArray, data, debug, verify, newObj} from '../../lib/combinators';
+import {list} from '../../lib/list';
 import {when, each, inArray, equals, some, every, not, whileMoreData, gt} from '../../lib/conditionals';
 import {ue, u, se, val} from '../../lib/data-types';
 import {
@@ -279,7 +280,8 @@ const seiPayloadCodecs = {
 };
 
 const seiPayloadParser = {
-  decode: function (expGolomb, output, options, index) {
+  decode: function ({expGolomb, output, options, indexes, path}) {
+    let index = indexes[0];
     let message = {
       payloadType: 0,
       payloadSize: 0,
@@ -305,7 +307,13 @@ const seiPayloadParser = {
 
       if (payloadCodec.codec) {
         let subExpGolomb = new ExpGolombDecoder(bitString);
-        payloadCodec.codec.decode(subExpGolomb, message, options);
+        payloadCodec.codec.decode({
+          expGolomb: subExpGolomb,
+          output: message,
+          options,
+          path,
+          indexes
+        });
       } else {
         message.data = bitStringToTypedArray(bitString);
       }
@@ -318,8 +326,9 @@ const seiPayloadParser = {
 
     return output;
   },
-  encode: function (expGolomb, input, options, index) {
+  encode: function ({expGolomb, input, options, indexes, path}) {
     // This function was never tested...
+    let index = indexes[0];
     let message = input[index];
     let payloadTypeRemaining = message.payloadType;
 
@@ -341,7 +350,13 @@ const seiPayloadParser = {
 
     if (payloadCodec && payloadCodec.codec) {
       let subExpGolomb = new ExpGolombEncoder();
-      payloadCodec.codec.encode(subExpGolomb, message, options);
+      payloadCodec.codec.encode({
+        expGolomb: subExpGolomb,
+        input: message,
+        options,
+        path,
+        indexes
+      });
       let bits = subExpGolomb.bitReservoir;
 
       if (bits.length % 8 !== 0) {

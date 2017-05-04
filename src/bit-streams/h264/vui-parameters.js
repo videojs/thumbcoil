@@ -1,6 +1,7 @@
 'use strict';
 
-import {start, list, data} from '../../lib/combinators';
+import {start, data, debug} from '../../lib/combinators';
+import {list} from '../../lib/list';
 import {when, equals, some} from '../../lib/conditionals';
 import {ue, u, val} from '../../lib/data-types';
 

@@ -1,8 +1,16 @@
-export const list = function (parseFns) {
+export const list = function (parseFns, silent) {
   return {
-    decode: (expGolomb, output, options, index) => {
+    decode: ({expGolomb, output, options, indexes, path}) => {
+      const newPath = silent ? path : path.concat('[list]');
+
       parseFns.forEach((fn) => {
-        output = fn.decode(expGolomb, output, options, index) || output;
+        output = fn.decode({
+          expGolomb,
+          output,
+          options,
+          indexes,
+          path: newPath
+        }) || output;
       });
 
       return output;

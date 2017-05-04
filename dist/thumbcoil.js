@@ -1,9 +1,3 @@
-/**
- * thumbcoil
- * @version 1.2.3
- * @copyright 2017 Brightcove, Inc.
- * @license Apache-2.0
- */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.thumbcoil = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
 
@@ -1646,6 +1640,8 @@ var _libExpGolombString = require('../../lib/exp-golomb-string');
 
 var _libCombinators = require('../../lib/combinators');
 
+var _libList = require('../../lib/list');
+
 var _libConditionals = require('../../lib/conditionals');
 
 var _libDataTypes = require('../../lib/data-types');
@@ -1685,7 +1681,11 @@ var bit_set = function bit_set(val, bit) {
 };
 
 var doPostIcsInfoCalculation = {
-  decode: function decode(expGolomb, output, options, index) {
+  decode: function decode(_ref) {
+    var expGolomb = _ref.expGolomb;
+    var output = _ref.output;
+    var options = _ref.options;
+
     var fs_index = options.sampling_frequency_index;
 
     if (output.window_sequence === EIGHT_SHORT_SEQUENCE) {
@@ -1742,7 +1742,11 @@ var doPostIcsInfoCalculation = {
 };
 
 var sectionData = {
-  decode: function decode(expGolomb, output, options, index) {
+  decode: function decode(_ref2) {
+    var expGolomb = _ref2.expGolomb;
+    var output = _ref2.output;
+    var options = _ref2.options;
+
     var bits = 5;
     if (output.window_sequence === EIGHT_SHORT_SEQUENCE) {
       bits = 3;
@@ -1790,7 +1794,11 @@ var sectionData = {
 };
 
 var scaleFactorData = {
-  decode: function decode(expGolomb, output, options, index) {
+  decode: function decode(_ref3) {
+    var expGolomb = _ref3.expGolomb;
+    var output = _ref3.output;
+    var options = _ref3.options;
+
     output.scale_factors = [];
 
     for (var g = 0; g < output.num_window_groups; g++) {
@@ -1806,7 +1814,11 @@ var scaleFactorData = {
 };
 
 var tnsData = {
-  decode: function decode(expGolomb, output, options, index) {
+  decode: function decode(_ref4) {
+    var expGolomb = _ref4.expGolomb;
+    var output = _ref4.output;
+    var options = _ref4.options;
+
     output.n_filt = [];
     output.coef_res = [];
     output.length = [];
@@ -1847,7 +1859,11 @@ var tnsData = {
 };
 
 var gainControlData = {
-  decode: function decode(expGolomb, output, options, index) {
+  decode: function decode(_ref5) {
+    var expGolomb = _ref5.expGolomb;
+    var output = _ref5.output;
+    var options = _ref5.options;
+
     output.max_band = expGolomb.readBits(2);
     output.adjust_num = [];
     output.alevcode = [];
@@ -1993,7 +2009,11 @@ var readEscValue = function readEscValue(expGolomb) {
 };
 
 var spectralData = {
-  decode: function decode(expGolomb, output, options, index) {
+  decode: function decode(_ref6) {
+    var expGolomb = _ref6.expGolomb;
+    var output = _ref6.output;
+    var options = _ref6.options;
+
     output.spectral_data = [];
     for (var g = 0; g < output.num_window_groups; g++) {
       output.spectral_data[g] = [];
@@ -2039,7 +2059,11 @@ var spectralData = {
 };
 
 var readMsMask = {
-  decode: function decode(expGolomb, output, options, index) {
+  decode: function decode(_ref7) {
+    var expGolomb = _ref7.expGolomb;
+    var output = _ref7.output;
+    var options = _ref7.options;
+
     output.ms_used = [];
 
     for (var g = 0; g < output.num_window_groups; g++) {
@@ -2054,62 +2078,66 @@ var readMsMask = {
   encode: function encode(expGolomb, input, options, index) {}
 };
 
-var icsInfo = (0, _libCombinators.list)([(0, _libCombinators.data)('ics_reserved_bit', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('window_sequence', (0, _libDataTypes.u)(2)), (0, _libCombinators.data)('window_shape', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('window_sequence', EIGHT_SHORT_SEQUENCE), (0, _libCombinators.list)([(0, _libCombinators.data)('max_sfb', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('scale_factor_grouping', (0, _libDataTypes.u)(7))])), (0, _libConditionals.when)((0, _libConditionals.not)((0, _libConditionals.equals)('window_sequence', EIGHT_SHORT_SEQUENCE)), (0, _libCombinators.list)([(0, _libCombinators.data)('max_sfb', (0, _libDataTypes.u)(6)), (0, _libCombinators.data)('predictor_data_present', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('predictor_data_present', 1), (0, _libCombinators.list)([(0, _libCombinators.data)('predictor_reset', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('predictor_reset', 1), (0, _libCombinators.data)('predictor_reset_group_number', (0, _libDataTypes.u)(5))), (0, _libConditionals.each)(function (index, options) {
+var icsInfo = (0, _libList.list)([(0, _libCombinators.data)('ics_reserved_bit', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('window_sequence', (0, _libDataTypes.u)(2)), (0, _libCombinators.data)('window_shape', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('window_sequence', EIGHT_SHORT_SEQUENCE), (0, _libCombinators.data)('max_sfb', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('scale_factor_grouping', (0, _libDataTypes.u)(7))), (0, _libConditionals.when)((0, _libConditionals.not)((0, _libConditionals.equals)('window_sequence', EIGHT_SHORT_SEQUENCE)), (0, _libCombinators.data)('max_sfb', (0, _libDataTypes.u)(6)), (0, _libCombinators.data)('predictor_data_present', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('predictor_data_present', 1), (0, _libCombinators.data)('predictor_reset', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('predictor_reset', 1), (0, _libCombinators.data)('predictor_reset_group_number', (0, _libDataTypes.u)(5))), (0, _libConditionals.each)(function (index, options) {
   return index < Math.min(options.max_sfb, PRED_SFB_MAX[options.sampling_frequency_index]);
-}, (0, _libCombinators.data)('prediction_used[]', (0, _libDataTypes.u)(1)))]))])), doPostIcsInfoCalculation]);
+}, (0, _libCombinators.data)('prediction_used[]', (0, _libDataTypes.u)(1))))), doPostIcsInfoCalculation]);
 
-var pulseData = (0, _libCombinators.list)([(0, _libCombinators.data)('number_pulse', (0, _libDataTypes.u)(2)), (0, _libCombinators.data)('pulse_start_sfb', (0, _libDataTypes.u)(6)), (0, _libConditionals.each)(function (index, options) {
+var pulseData = (0, _libList.list)([(0, _libCombinators.data)('number_pulse', (0, _libDataTypes.u)(2)), (0, _libCombinators.data)('pulse_start_sfb', (0, _libDataTypes.u)(6)), (0, _libConditionals.each)(function (index, options) {
   return index <= options.number_pulse;
-}, (0, _libCombinators.list)([(0, _libCombinators.data)('pulse_offset[]', (0, _libDataTypes.u)(5)), (0, _libCombinators.data)('pulse_amp[]', (0, _libDataTypes.u)(4))]))]);
+}, (0, _libCombinators.data)('pulse_offset[]', (0, _libDataTypes.u)(5)), (0, _libCombinators.data)('pulse_amp[]', (0, _libDataTypes.u)(4)))]);
 
-var individualChannelStream = (0, _libCombinators.list)([(0, _libCombinators.data)('global_gain', (0, _libDataTypes.u)(8)), (0, _libConditionals.when)((0, _libConditionals.not)((0, _libConditionals.equals)('common_window', 1)), icsInfo), sectionData, scaleFactorData, (0, _libCombinators.data)('pulse_data_present', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('pulse_data_present', 1), pulseData), (0, _libCombinators.data)('tns_data_present', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('tns_data_present', 1), tnsData), (0, _libCombinators.data)('gain_control_data_present', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('gain_control_data_present', 1), gainControlData), spectralData]);
+var individualChannelStream = (0, _libList.list)([(0, _libCombinators.data)('global_gain', (0, _libDataTypes.u)(8)), (0, _libConditionals.when)((0, _libConditionals.not)((0, _libConditionals.equals)('common_window', 1)), icsInfo), sectionData, scaleFactorData, (0, _libCombinators.data)('pulse_data_present', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('pulse_data_present', 1), pulseData), (0, _libCombinators.data)('tns_data_present', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('tns_data_present', 1), tnsData), (0, _libCombinators.data)('gain_control_data_present', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('gain_control_data_present', 1), gainControlData), spectralData]);
 
 var noop = { decode: function decode() {} };
 
-var elemTypes = ['single_channel_element', 'channel_pair_element', 'coupling_channel_element', 'lfe_channel_element', 'data_stream_element', 'program_config_element', 'fill_element', 'end'];
+var singleChannelElem = (0, _libList.list)([(0, _libCombinators.data)('element_instance_tag', (0, _libDataTypes.u)(4)), individualChannelStream]);
 
-var elemParsers = [(0, _libCombinators.list)([// single_channel_element
-(0, _libCombinators.data)('element_instance_tag', (0, _libDataTypes.u)(4)), individualChannelStream]), (0, _libCombinators.list)([// channel_pair_element
-(0, _libCombinators.data)('element_instance_tag', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('common_window', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('common_window', 1), (0, _libCombinators.list)([icsInfo, (0, _libCombinators.data)('ms_mask_present', (0, _libDataTypes.u)(2)), (0, _libConditionals.when)((0, _libConditionals.equals)('ms_mask_present', 1), readMsMask)])), (0, _libCombinators.newObj)('ics_1', (0, _libCombinators.list)([(0, _libCombinators.data)('type', (0, _libDataTypes.val)('individual_channel_stream')), individualChannelStream])), (0, _libCombinators.newObj)('ics_2', (0, _libCombinators.list)([(0, _libCombinators.data)('type', (0, _libDataTypes.val)('individual_channel_stream')), individualChannelStream]))]), noop, // coupling_channel_element
-(0, _libCombinators.list)([// lfe_channel_element
-(0, _libCombinators.data)('element_instance_tag', (0, _libDataTypes.u)(4)), individualChannelStream]), (0, _libCombinators.list)([// data_stream_element
-(0, _libCombinators.data)('element_instance_tag', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('data_byte_align_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('count', (0, _libDataTypes.u)(8)), (0, _libCombinators.data)('esc_count', (0, _libDataTypes.val)(0)), (0, _libConditionals.when)((0, _libConditionals.equals)('count', 255), (0, _libCombinators.data)('esc_count', (0, _libDataTypes.u)(8))), (0, _libConditionals.when)((0, _libConditionals.equals)('data_byte_align_flag', 1), (0, _libCombinators.data)('byte_alignment_bits', _libDataTypes.byteAlign)), (0, _libConditionals.each)(function (index, options) {
+var channelPairElem = (0, _libList.list)([(0, _libCombinators.data)('element_instance_tag', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('common_window', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('common_window', 1), icsInfo, (0, _libCombinators.data)('ms_mask_present', (0, _libDataTypes.u)(2)), (0, _libConditionals.when)((0, _libConditionals.equals)('ms_mask_present', 1), readMsMask)), (0, _libCombinators.newObj)('ics_1', (0, _libCombinators.data)('type', (0, _libDataTypes.val)('individual_channel_stream')), individualChannelStream), (0, _libCombinators.newObj)('ics_2', (0, _libCombinators.data)('type', (0, _libDataTypes.val)('individual_channel_stream')), individualChannelStream)]);
+
+var couplingChannelElem = noop;
+
+var lfeChannelElem = (0, _libList.list)([(0, _libCombinators.data)('element_instance_tag', (0, _libDataTypes.u)(4)), individualChannelStream]);
+
+var dataStreamElem = (0, _libList.list)([(0, _libCombinators.data)('element_instance_tag', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('data_byte_align_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('count', (0, _libDataTypes.u)(8)), (0, _libCombinators.data)('esc_count', (0, _libDataTypes.val)(0)), (0, _libConditionals.when)((0, _libConditionals.equals)('count', 255), (0, _libCombinators.data)('esc_count', (0, _libDataTypes.u)(8))), (0, _libConditionals.when)((0, _libConditionals.equals)('data_byte_align_flag', 1), (0, _libCombinators.data)('byte_alignment_bits', _libDataTypes.byteAlign)), (0, _libConditionals.each)(function (index, options) {
   return index < options.count + options.esc_count;
-}, (0, _libCombinators.data)('data_stream_byte[]', (0, _libDataTypes.u)(8)))]), (0, _libCombinators.list)([// program_config_element
-(0, _libCombinators.data)('element_instance_tag', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('profile', (0, _libDataTypes.u)(2)), (0, _libCombinators.data)('sampling_frequency_index', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('num_front_channel_elements', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('num_side_channel_elements', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('num_back_channel_elements', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('num_lfe_channel_elements', (0, _libDataTypes.u)(2)), (0, _libCombinators.data)('num_assoc_data_elements', (0, _libDataTypes.u)(3)), (0, _libCombinators.data)('num_valid_cc_elements', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('mono_mixdown_present', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('mono_mixdown_present', 1), (0, _libCombinators.data)('mono_mixdown_element_number', (0, _libDataTypes.u)(4))), (0, _libCombinators.data)('stereo_mixdown_present', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('stereo_mixdown_present', 1), (0, _libCombinators.data)('stereo_mixdown_element_number', (0, _libDataTypes.u)(4))), (0, _libCombinators.data)('matrix_mixdown_idx_present', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('matrix_mixdown_idx_present', 1), (0, _libCombinators.list)([(0, _libCombinators.data)('matrix_mixdown_idx', (0, _libDataTypes.u)(2)), (0, _libCombinators.data)('pseudo_surround_enable', (0, _libDataTypes.u)(1))])), (0, _libConditionals.each)(function (index, options) {
+}, (0, _libCombinators.data)('data_stream_byte[]', (0, _libDataTypes.u)(8)))]);
+
+var programConfigElem = (0, _libList.list)([(0, _libCombinators.data)('element_instance_tag', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('profile', (0, _libDataTypes.u)(2)), (0, _libCombinators.data)('sampling_frequency_index', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('num_front_channel_elements', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('num_side_channel_elements', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('num_back_channel_elements', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('num_lfe_channel_elements', (0, _libDataTypes.u)(2)), (0, _libCombinators.data)('num_assoc_data_elements', (0, _libDataTypes.u)(3)), (0, _libCombinators.data)('num_valid_cc_elements', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('mono_mixdown_present', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('mono_mixdown_present', 1), (0, _libCombinators.data)('mono_mixdown_element_number', (0, _libDataTypes.u)(4))), (0, _libCombinators.data)('stereo_mixdown_present', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('stereo_mixdown_present', 1), (0, _libCombinators.data)('stereo_mixdown_element_number', (0, _libDataTypes.u)(4))), (0, _libCombinators.data)('matrix_mixdown_idx_present', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('matrix_mixdown_idx_present', 1), (0, _libCombinators.data)('matrix_mixdown_idx', (0, _libDataTypes.u)(2)), (0, _libCombinators.data)('pseudo_surround_enable', (0, _libDataTypes.u)(1))), (0, _libConditionals.each)(function (index, options) {
   return index < options.num_front_channel_elements;
-}, (0, _libCombinators.list)([(0, _libCombinators.data)('front_element_is_cpe[]', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('front_element_tag_select[]', (0, _libDataTypes.u)(4))])), (0, _libConditionals.each)(function (index, options) {
+}, (0, _libCombinators.data)('front_element_is_cpe[]', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('front_element_tag_select[]', (0, _libDataTypes.u)(4))), (0, _libConditionals.each)(function (index, options) {
   return index < options.num_side_channel_elements;
-}, (0, _libCombinators.list)([(0, _libCombinators.data)('side_element_is_cpe[]', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('side_element_tag_select[]', (0, _libDataTypes.u)(4))])), (0, _libConditionals.each)(function (index, options) {
+}, (0, _libCombinators.data)('side_element_is_cpe[]', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('side_element_tag_select[]', (0, _libDataTypes.u)(4))), (0, _libConditionals.each)(function (index, options) {
   return index < options.num_back_channel_elements;
-}, (0, _libCombinators.list)([(0, _libCombinators.data)('back_element_is_cpe[]', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('back_element_tag_select[]', (0, _libDataTypes.u)(4))])), (0, _libConditionals.each)(function (index, options) {
+}, (0, _libCombinators.data)('back_element_is_cpe[]', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('back_element_tag_select[]', (0, _libDataTypes.u)(4))), (0, _libConditionals.each)(function (index, options) {
   return index < options.num_lfe_channel_elements;
 }, (0, _libCombinators.data)('lfe_element_tag_select[]', (0, _libDataTypes.u)(4))), (0, _libConditionals.each)(function (index, options) {
   return index < options.num_assoc_data_elements;
 }, (0, _libCombinators.data)('assoc_data_element_tag_select[]', (0, _libDataTypes.u)(4))), (0, _libConditionals.each)(function (index, options) {
   return index < options.num_valid_cc_elements;
-}, (0, _libCombinators.list)([(0, _libCombinators.data)('cc_element_is_ind_sw[]', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('valid_cc_element_tag_select[]', (0, _libDataTypes.u)(4))])), (0, _libCombinators.data)('byte_alignment_bits', (0, _libDataTypes.byteAlign)()), (0, _libCombinators.data)('comment_field_bytes', (0, _libDataTypes.u)(8)), (0, _libConditionals.each)(function (index, options) {
+}, (0, _libCombinators.data)('cc_element_is_ind_sw[]', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('valid_cc_element_tag_select[]', (0, _libDataTypes.u)(4))), (0, _libCombinators.data)('byte_alignment_bits', (0, _libDataTypes.byteAlign)()), (0, _libCombinators.data)('comment_field_bytes', (0, _libDataTypes.u)(8)), (0, _libConditionals.each)(function (index, options) {
   return index < options.comment_field_bytes;
-}, (0, _libCombinators.data)('comment_field_data[]', (0, _libDataTypes.u)(8)))]), (0, _libCombinators.list)([// fill_element
-(0, _libCombinators.data)('count', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('esc_count', (0, _libDataTypes.val)(0)), (0, _libConditionals.when)((0, _libConditionals.equals)('count', 15), (0, _libCombinators.data)('esc_count', (0, _libDataTypes.u)(8))), (0, _libConditionals.each)(function (index, options) {
-  return index < options.count + options.esc_count - 1;
-}, (0, _libCombinators.data)('fill_byte[]', (0, _libDataTypes.u)(8)))]), (0, _libCombinators.list)([// end
-(0, _libCombinators.data)('byte_alignment_bits', (0, _libDataTypes.byteAlign)())])];
+}, (0, _libCombinators.data)('comment_field_data[]', (0, _libDataTypes.u)(8)))]);
 
-var aacCodec = (0, _libCombinators.start)('elements', (0, _libConditionals.whileMoreData)((0, _libCombinators.newObj)('elements[]', (0, _libCombinators.list)([(0, _libCombinators.data)('id_syn_ele', (0, _libDataTypes.u)(3)), (0, _libConditionals.when)((0, _libConditionals.equals)('id_syn_ele', 0), (0, _libCombinators.list)([(0, _libCombinators.data)('type', (0, _libDataTypes.val)(elemTypes[0])), elemParsers[0]])), (0, _libConditionals.when)((0, _libConditionals.equals)('id_syn_ele', 1), (0, _libCombinators.list)([(0, _libCombinators.data)('type', (0, _libDataTypes.val)(elemTypes[1])), elemParsers[1]])), (0, _libConditionals.when)((0, _libConditionals.equals)('id_syn_ele', 2), (0, _libCombinators.list)([(0, _libCombinators.data)('type', (0, _libDataTypes.val)(elemTypes[2])), elemParsers[2]])), (0, _libConditionals.when)((0, _libConditionals.equals)('id_syn_ele', 3), (0, _libCombinators.list)([(0, _libCombinators.data)('type', (0, _libDataTypes.val)(elemTypes[3])), elemParsers[3]])), (0, _libConditionals.when)((0, _libConditionals.equals)('id_syn_ele', 4), (0, _libCombinators.list)([(0, _libCombinators.data)('type', (0, _libDataTypes.val)(elemTypes[4])), elemParsers[4]])), (0, _libConditionals.when)((0, _libConditionals.equals)('id_syn_ele', 5), (0, _libCombinators.list)([(0, _libCombinators.data)('type', (0, _libDataTypes.val)(elemTypes[5])), elemParsers[5]])), (0, _libConditionals.when)((0, _libConditionals.equals)('id_syn_ele', 6), (0, _libCombinators.list)([(0, _libCombinators.data)('type', (0, _libDataTypes.val)(elemTypes[6])), elemParsers[6]])), (0, _libConditionals.when)((0, _libConditionals.equals)('id_syn_ele', 7), (0, _libCombinators.list)([(0, _libCombinators.data)('type', (0, _libDataTypes.val)(elemTypes[7])), elemParsers[7]]))]))));
+var fillElem = (0, _libList.list)([(0, _libCombinators.data)('count', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('esc_count', (0, _libDataTypes.val)(0)), (0, _libConditionals.when)((0, _libConditionals.equals)('count', 15), (0, _libCombinators.data)('esc_count', (0, _libDataTypes.u)(8))), (0, _libConditionals.each)(function (index, options) {
+  return index < options.count + options.esc_count - 1;
+}, (0, _libCombinators.data)('fill_byte[]', (0, _libDataTypes.u)(8)))]);
+
+var endElem = (0, _libList.list)([(0, _libCombinators.data)('byte_alignment_bits', (0, _libDataTypes.byteAlign)()), (0, _libCombinators.verify)('aac')]);
+
+var aacCodec = (0, _libCombinators.start)('elements', (0, _libConditionals.whileMoreData)((0, _libCombinators.newObj)('elements[]', (0, _libCombinators.data)('id_syn_ele', (0, _libDataTypes.u)(3)), (0, _libConditionals.when)((0, _libConditionals.equals)('id_syn_ele', 0), (0, _libCombinators.data)('type', (0, _libDataTypes.val)('single_channel_element')), singleChannelElem), (0, _libConditionals.when)((0, _libConditionals.equals)('id_syn_ele', 1), (0, _libCombinators.data)('type', (0, _libDataTypes.val)('channel_pair_element')), channelPairElem), (0, _libConditionals.when)((0, _libConditionals.equals)('id_syn_ele', 2), (0, _libCombinators.data)('type', (0, _libDataTypes.val)('coupling_channel_element')), couplingChannelElem), (0, _libConditionals.when)((0, _libConditionals.equals)('id_syn_ele', 3), (0, _libCombinators.data)('type', (0, _libDataTypes.val)('lfe_channel_element')), lfeChannelElem), (0, _libConditionals.when)((0, _libConditionals.equals)('id_syn_ele', 4), (0, _libCombinators.data)('type', (0, _libDataTypes.val)('data_stream_element')), dataStreamElem), (0, _libConditionals.when)((0, _libConditionals.equals)('id_syn_ele', 5), (0, _libCombinators.data)('type', (0, _libDataTypes.val)('program_config_element')), programConfigElem), (0, _libConditionals.when)((0, _libConditionals.equals)('id_syn_ele', 6), (0, _libCombinators.data)('type', (0, _libDataTypes.val)('fill_element')), fillElem), (0, _libConditionals.when)((0, _libConditionals.equals)('id_syn_ele', 7), (0, _libCombinators.data)('type', (0, _libDataTypes.val)('end')), endElem))));
 
 exports.aacCodec = aacCodec;
 var adts_error_check = (0, _libConditionals.when)((0, _libConditionals.equals)('protection_absent', 0), (0, _libCombinators.data)('crc_check', (0, _libDataTypes.u)(16)));
 
-var adts_header_error_check = (0, _libCombinators.list)([(0, _libConditionals.when)((0, _libConditionals.equals)('protection_absent', 0), (0, _libConditionals.each)(function (index, options, output) {
+var adts_header_error_check = (0, _libList.list)([(0, _libConditionals.when)((0, _libConditionals.equals)('protection_absent', 0), (0, _libConditionals.each)(function (index, options, output) {
   return index < output.number_of_raw_data_blocks_in_frame;
 }, (0, _libCombinators.data)('raw_data_block_position[]', (0, _libDataTypes.u)(16)))), adts_error_check]);
 
-var adtsCodec = (0, _libCombinators.start)('adts_frame', (0, _libCombinators.list)([(0, _libCombinators.data)('sync_word', (0, _libDataTypes.u)(12)), (0, _libCombinators.data)('ID', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('layer', (0, _libDataTypes.u)(2)), (0, _libCombinators.data)('protection_absent', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('profile', (0, _libDataTypes.u)(2)), (0, _libCombinators.data)('sampling_frequency_index', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('private_bit', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('channel_configuration', (0, _libDataTypes.u)(3)), (0, _libCombinators.data)('original_copy', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('home', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('copyright_identification_bit', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('copyright_identification_start', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('aac_frame_length', (0, _libDataTypes.u)(13)), (0, _libCombinators.data)('adts_buffer_fullness', (0, _libDataTypes.u)(11)), (0, _libCombinators.data)('number_of_raw_data_blocks_in_frame', (0, _libDataTypes.u)(2)), (0, _libConditionals.when)((0, _libConditionals.equals)('number_of_raw_data_blocks_in_frame', 0), (0, _libCombinators.list)([adts_error_check, aacCodec])), (0, _libConditionals.when)((0, _libConditionals.not)((0, _libConditionals.equals)('number_of_raw_data_blocks_in_frame', 0)), (0, _libCombinators.list)([adts_header_error_check, (0, _libConditionals.each)(function (index, options, output) {
+var adtsCodec = (0, _libCombinators.start)('adts_frame', (0, _libCombinators.data)('sync_word', (0, _libDataTypes.u)(12)), (0, _libCombinators.data)('ID', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('layer', (0, _libDataTypes.u)(2)), (0, _libCombinators.data)('protection_absent', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('profile', (0, _libDataTypes.u)(2)), (0, _libCombinators.data)('sampling_frequency_index', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('private_bit', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('channel_configuration', (0, _libDataTypes.u)(3)), (0, _libCombinators.data)('original_copy', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('home', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('copyright_identification_bit', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('copyright_identification_start', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('aac_frame_length', (0, _libDataTypes.u)(13)), (0, _libCombinators.data)('adts_buffer_fullness', (0, _libDataTypes.u)(11)), (0, _libCombinators.data)('number_of_raw_data_blocks_in_frame', (0, _libDataTypes.u)(2)), (0, _libConditionals.when)((0, _libConditionals.equals)('number_of_raw_data_blocks_in_frame', 0), adts_error_check, aacCodec), (0, _libConditionals.when)((0, _libConditionals.not)((0, _libConditionals.equals)('number_of_raw_data_blocks_in_frame', 0)), adts_header_error_check, (0, _libConditionals.each)(function (index, options, output) {
   return index <= output.number_of_raw_data_blocks_in_frame;
-}, (0, _libCombinators.list)([(0, _libCombinators.newObj)('frames[]', aacCodec), adts_error_check]))]))]));
+}, (0, _libCombinators.newObj)('frames[]', aacCodec), adts_error_check)));
 exports.adtsCodec = adtsCodec;
-},{"../../lib/combinators":21,"../../lib/conditionals":22,"../../lib/data-types":23,"../../lib/exp-golomb-string":25,"../../lib/rbsp-utils":27,"./codebooks":1,"./scale-factor-bands":3}],3:[function(require,module,exports){
+},{"../../lib/combinators":21,"../../lib/conditionals":22,"../../lib/data-types":23,"../../lib/exp-golomb-string":25,"../../lib/list":26,"../../lib/rbsp-utils":30,"./codebooks":1,"./scale-factor-bands":3}],3:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2143,34 +2171,19 @@ var swb_offset_short_window = [[// 96khz
 0, 4, 8, 12, 16, 20, 24, 28, 32, 40, 48, 60, 72, 88, 108, 128], [// 11.025khz
 0, 4, 8, 12, 16, 20, 24, 28, 32, 40, 48, 60, 72, 88, 108, 128], [// 8khz
 0, 4, 8, 12, 16, 20, 24, 28, 36, 44, 52, 60, 72, 88, 108, 128]];
-
 exports.swb_offset_short_window = swb_offset_short_window;
-var ADTS_SAMPLING_FREQUENCIES = [
-////  96000,
-////  88200,
-////  64000,
-////  48000,
-////  44100,
-////  32000,
-////  24000,
-////  22050,
-////  16000,
-////  12000,
-////  11025,
-////  8000,
-7350];
 },{}],4:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
-  value: true
+    value: true
 });
 
 var _libCombinators = require('../../lib/combinators');
 
 var _libDataTypes = require('../../lib/data-types');
 
-var audCodec = (0, _libCombinators.start)('access_unit_delimiter', (0, _libCombinators.list)([(0, _libCombinators.data)('primary_pic_type', (0, _libDataTypes.u)(3)), (0, _libCombinators.verify)('access_unit_delimiter')]));
+var audCodec = (0, _libCombinators.start)('access_unit_delimiter', (0, _libCombinators.data)('primary_pic_type', (0, _libDataTypes.u)(3)), (0, _libCombinators.verify)('access_unit_delimiter'));
 
 exports['default'] = audCodec;
 module.exports = exports['default'];
@@ -2185,6 +2198,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'd
 
 var _libCombinators = require('../../lib/combinators');
 
+var _libList = require('../../lib/list');
+
 var _libDataTypes = require('../../lib/data-types');
 
 var _libConditionals = require('../../lib/conditionals');
@@ -2195,13 +2210,13 @@ var _scalingList2 = _interopRequireDefault(_scalingList);
 
 var v = null;
 
-var hdrParameters = (0, _libCombinators.list)([(0, _libCombinators.data)('cpb_cnt_minus1', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('bit_rate_scale', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('cpb_size_scale', (0, _libDataTypes.u)(4)), (0, _libConditionals.each)(function (index, output) {
+var hdrParameters = (0, _libList.list)([(0, _libCombinators.data)('cpb_cnt_minus1', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('bit_rate_scale', (0, _libDataTypes.u)(4)), (0, _libCombinators.data)('cpb_size_scale', (0, _libDataTypes.u)(4)), (0, _libConditionals.each)(function (index, output) {
   return index <= output.cpb_cnt_minus1;
-}, (0, _libCombinators.list)([(0, _libCombinators.data)('bit_rate_value_minus1[]', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('cpb_size_value_minus1[]', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('cbr_flag[]', (0, _libDataTypes.u)(1))])), (0, _libCombinators.data)('initial_cpb_removal_delay_length_minus1', (0, _libDataTypes.u)(5)), (0, _libCombinators.data)('cpb_removal_delay_length_minus1', (0, _libDataTypes.u)(5)), (0, _libCombinators.data)('dpb_output_delay_length_minus1', (0, _libDataTypes.u)(5)), (0, _libCombinators.data)('time_offset_length', (0, _libDataTypes.u)(5))]);
+}, (0, _libList.list)([(0, _libCombinators.data)('bit_rate_value_minus1[]', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('cpb_size_value_minus1[]', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('cbr_flag[]', (0, _libDataTypes.u)(1))])), (0, _libCombinators.data)('initial_cpb_removal_delay_length_minus1', (0, _libDataTypes.u)(5)), (0, _libCombinators.data)('cpb_removal_delay_length_minus1', (0, _libDataTypes.u)(5)), (0, _libCombinators.data)('dpb_output_delay_length_minus1', (0, _libDataTypes.u)(5)), (0, _libCombinators.data)('time_offset_length', (0, _libDataTypes.u)(5))]);
 
 exports['default'] = hdrParameters;
 module.exports = exports['default'];
-},{"../../lib/combinators":21,"../../lib/conditionals":22,"../../lib/data-types":23,"./scaling-list":8}],6:[function(require,module,exports){
+},{"../../lib/combinators":21,"../../lib/conditionals":22,"../../lib/data-types":23,"../../lib/list":26,"./scaling-list":8}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -2266,17 +2281,15 @@ var _scalingList2 = _interopRequireDefault(_scalingList);
 
 var v = null;
 
-var ppsCodec = (0, _libCombinators.start)('pic_parameter_set', (0, _libCombinators.list)([(0, _libCombinators.data)('pic_parameter_set_id', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('seq_parameter_set_id', (0, _libDataTypes.ue)(v)),
-//    pickOptions('sps', 'seq_parameter_set_id'),
-(0, _libCombinators.data)('entropy_coding_mode_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('bottom_field_pic_order_in_frame_present_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('num_slice_groups_minus1', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.not)((0, _libConditionals.equals)('num_slice_groups_minus1', 0)), (0, _libCombinators.list)([(0, _libCombinators.data)('slice_group_map_type', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.equals)('slice_group_map_type', 0), (0, _libConditionals.each)(function (index, output) {
+var ppsCodec = (0, _libCombinators.start)('pic_parameter_set', (0, _libCombinators.data)('pic_parameter_set_id', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('seq_parameter_set_id', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('entropy_coding_mode_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('bottom_field_pic_order_in_frame_present_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('num_slice_groups_minus1', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.not)((0, _libConditionals.equals)('num_slice_groups_minus1', 0)), (0, _libCombinators.data)('slice_group_map_type', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.equals)('slice_group_map_type', 0), (0, _libConditionals.each)(function (index, output) {
   return index <= output.num_slice_groups_minus1;
 }, (0, _libCombinators.data)('run_length_minus1[]', (0, _libDataTypes.ue)(v)))), (0, _libConditionals.when)((0, _libConditionals.equals)('slice_group_map_type', 2), (0, _libConditionals.each)(function (index, output) {
   return index <= output.num_slice_groups_minus1;
-}, (0, _libCombinators.list)([(0, _libCombinators.data)('top_left[]', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('bottom_right[]', (0, _libDataTypes.ue)(v))]))), (0, _libConditionals.when)((0, _libConditionals.inArray)('slice_group_map_type', [3, 4, 5]), (0, _libCombinators.list)([(0, _libCombinators.data)('slice_group_change_direction_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('slice_group_change_rate_minus1', (0, _libDataTypes.ue)(v))])), (0, _libConditionals.when)((0, _libConditionals.equals)('slice_group_map_type', 6), (0, _libCombinators.list)([(0, _libCombinators.data)('pic_size_in_map_units_minus1', (0, _libDataTypes.ue)(v)), (0, _libConditionals.each)(function (index, output) {
+}, (0, _libCombinators.data)('top_left[]', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('bottom_right[]', (0, _libDataTypes.ue)(v)))), (0, _libConditionals.when)((0, _libConditionals.inArray)('slice_group_map_type', [3, 4, 5]), (0, _libCombinators.data)('slice_group_change_direction_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('slice_group_change_rate_minus1', (0, _libDataTypes.ue)(v))), (0, _libConditionals.when)((0, _libConditionals.equals)('slice_group_map_type', 6), (0, _libCombinators.data)('pic_size_in_map_units_minus1', (0, _libDataTypes.ue)(v)), (0, _libConditionals.each)(function (index, output) {
   return index <= output.pic_size_in_map_units_minus1;
-}, (0, _libCombinators.data)('slice_group_id[]', (0, _libDataTypes.ue)(v)))]))])), (0, _libCombinators.data)('num_ref_idx_l0_default_active_minus1', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('num_ref_idx_l1_default_active_minus1', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('weighted_pred_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('weighted_bipred_idc', (0, _libDataTypes.u)(2)), (0, _libCombinators.data)('pic_init_qp_minus26', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('pic_init_qs_minus26', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('chroma_qp_index_offset', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('deblocking_filter_control_present_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('constrained_intra_pred_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('redundant_pic_cnt_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.whenMoreData)((0, _libCombinators.list)([(0, _libCombinators.data)('transform_8x8_mode_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('pic_scaling_matrix_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('pic_scaling_matrix_present_flag', 1), (0, _libConditionals.each)(function (index, output) {
+}, (0, _libCombinators.data)('slice_group_id[]', (0, _libDataTypes.ue)(v))))), (0, _libCombinators.data)('num_ref_idx_l0_default_active_minus1', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('num_ref_idx_l1_default_active_minus1', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('weighted_pred_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('weighted_bipred_idc', (0, _libDataTypes.u)(2)), (0, _libCombinators.data)('pic_init_qp_minus26', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('pic_init_qs_minus26', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('chroma_qp_index_offset', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('deblocking_filter_control_present_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('constrained_intra_pred_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('redundant_pic_cnt_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.whenMoreData)((0, _libCombinators.data)('transform_8x8_mode_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('pic_scaling_matrix_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('pic_scaling_matrix_present_flag', 1), (0, _libConditionals.each)(function (index, output) {
   return index < 6 + (output.chroma_format_Idc !== 3 ? 2 : 6) * output.transform_8x8_mode_flag;
-}, (0, _libCombinators.list)([(0, _libCombinators.data)('pic_scaling_list_present_flag[]', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('pic_scaling_list_present_flag[]', 1), _scalingList2['default'])]))), (0, _libCombinators.data)('second_chroma_qp_index_offset', (0, _libDataTypes.se)(v))])), (0, _libCombinators.verify)('pic_parameter_set')]));
+}, (0, _libCombinators.data)('pic_scaling_list_present_flag[]', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('pic_scaling_list_present_flag[]', 1), _scalingList2['default']))), (0, _libCombinators.data)('second_chroma_qp_index_offset', (0, _libDataTypes.se)(v))), (0, _libCombinators.verify)('pic_parameter_set'));
 
 exports['default'] = ppsCodec;
 module.exports = exports['default'];
@@ -2385,16 +2398,16 @@ var getChromaFormatIdcValue = {
 /**
   * NOW we are ready to build an SPS parser!
   */
-var spsCodec = (0, _libCombinators.start)('seq_parameter_set', (0, _libCombinators.list)([
+var spsCodec = (0, _libCombinators.start)('seq_parameter_set',
 // defaults
-(0, _libCombinators.data)('chroma_format_idc', (0, _libDataTypes.val)(1)), (0, _libCombinators.data)('video_format', (0, _libDataTypes.val)(5)), (0, _libCombinators.data)('color_primaries', (0, _libDataTypes.val)(2)), (0, _libCombinators.data)('transfer_characteristics', (0, _libDataTypes.val)(2)), (0, _libCombinators.data)('sample_ratio', (0, _libDataTypes.val)(1.0)), (0, _libCombinators.data)('profile_idc', (0, _libDataTypes.u)(8)), (0, _libCombinators.data)('constraint_set0_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('constraint_set1_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('constraint_set2_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('constraint_set3_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('constraint_set4_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('constraint_set5_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('constraint_set6_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('constraint_set7_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('level_idc', (0, _libDataTypes.u)(8)), (0, _libCombinators.data)('seq_parameter_set_id', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.inArray)('profile_idc', PROFILES_WITH_OPTIONAL_SPS_DATA), (0, _libCombinators.list)([(0, _libCombinators.data)('chroma_format_idc', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.equals)('chroma_format_idc', 3), (0, _libCombinators.data)('separate_colour_plane_flag', (0, _libDataTypes.u)(1))), (0, _libConditionals.when)((0, _libConditionals.not)((0, _libConditionals.equals)('chroma_format_idc', 3)), (0, _libCombinators.data)('separate_colour_plane_flag', (0, _libDataTypes.val)(0))), (0, _libCombinators.data)('bit_depth_luma_minus8', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('bit_depth_chroma_minus8', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('qpprime_y_zero_transform_bypass_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('seq_scaling_matrix_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('seq_scaling_matrix_present_flag', 1), (0, _libConditionals.each)(function (index, output) {
+(0, _libCombinators.data)('chroma_format_idc', (0, _libDataTypes.val)(1)), (0, _libCombinators.data)('video_format', (0, _libDataTypes.val)(5)), (0, _libCombinators.data)('color_primaries', (0, _libDataTypes.val)(2)), (0, _libCombinators.data)('transfer_characteristics', (0, _libDataTypes.val)(2)), (0, _libCombinators.data)('sample_ratio', (0, _libDataTypes.val)(1.0)), (0, _libCombinators.data)('profile_idc', (0, _libDataTypes.u)(8)), (0, _libCombinators.data)('constraint_set0_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('constraint_set1_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('constraint_set2_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('constraint_set3_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('constraint_set4_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('constraint_set5_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('constraint_set6_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('constraint_set7_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('level_idc', (0, _libDataTypes.u)(8)), (0, _libCombinators.data)('seq_parameter_set_id', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.inArray)('profile_idc', PROFILES_WITH_OPTIONAL_SPS_DATA), (0, _libCombinators.data)('chroma_format_idc', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.equals)('chroma_format_idc', 3), (0, _libCombinators.data)('separate_colour_plane_flag', (0, _libDataTypes.u)(1))), (0, _libConditionals.when)((0, _libConditionals.not)((0, _libConditionals.equals)('chroma_format_idc', 3)), (0, _libCombinators.data)('separate_colour_plane_flag', (0, _libDataTypes.val)(0))), (0, _libCombinators.data)('bit_depth_luma_minus8', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('bit_depth_chroma_minus8', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('qpprime_y_zero_transform_bypass_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('seq_scaling_matrix_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('seq_scaling_matrix_present_flag', 1), (0, _libConditionals.each)(function (index, output) {
   return index < (output.chroma_format_idc !== 3 ? 8 : 12);
-}, (0, _libCombinators.list)([(0, _libCombinators.data)('seq_scaling_list_present_flag[]', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('seq_scaling_list_present_flag[]', 1), _scalingList2['default'])])))])), (0, _libCombinators.data)('log2_max_frame_num_minus4', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('pic_order_cnt_type', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.equals)('pic_order_cnt_type', 0), (0, _libCombinators.data)('log2_max_pic_order_cnt_lsb_minus4', (0, _libDataTypes.ue)(v))), (0, _libConditionals.when)((0, _libConditionals.equals)('pic_order_cnt_type', 1), (0, _libCombinators.list)([(0, _libCombinators.data)('delta_pic_order_always_zero_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('offset_for_non_ref_pic', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('offset_for_top_to_bottom_field', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('num_ref_frames_in_pic_order_cnt_cycle', (0, _libDataTypes.ue)(v)), (0, _libConditionals.each)(function (index, output) {
+}, (0, _libCombinators.data)('seq_scaling_list_present_flag[]', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('seq_scaling_list_present_flag[]', 1), _scalingList2['default'])))), (0, _libCombinators.data)('log2_max_frame_num_minus4', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('pic_order_cnt_type', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.equals)('pic_order_cnt_type', 0), (0, _libCombinators.data)('log2_max_pic_order_cnt_lsb_minus4', (0, _libDataTypes.ue)(v))), (0, _libConditionals.when)((0, _libConditionals.equals)('pic_order_cnt_type', 1), (0, _libCombinators.data)('delta_pic_order_always_zero_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('offset_for_non_ref_pic', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('offset_for_top_to_bottom_field', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('num_ref_frames_in_pic_order_cnt_cycle', (0, _libDataTypes.ue)(v)), (0, _libConditionals.each)(function (index, output) {
   return index < output.num_ref_frames_in_pic_order_cnt_cycle;
-}, (0, _libCombinators.data)('offset_for_ref_frame[]', (0, _libDataTypes.se)(v)))])), (0, _libCombinators.data)('max_num_ref_frames', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('gaps_in_frame_num_value_allowed_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('pic_width_in_mbs_minus1', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('pic_height_in_map_units_minus1', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('frame_mbs_only_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('frame_mbs_only_flag', 0), (0, _libCombinators.data)('mb_adaptive_frame_field_flag', (0, _libDataTypes.u)(1))), (0, _libCombinators.data)('direct_8x8_inference_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('frame_cropping_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('frame_cropping_flag', 1), (0, _libCombinators.list)([(0, _libCombinators.data)('frame_crop_left_offset', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('frame_crop_right_offset', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('frame_crop_top_offset', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('frame_crop_bottom_offset', (0, _libDataTypes.ue)(v))])), (0, _libCombinators.data)('vui_parameters_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('vui_parameters_present_flag', 1), _vuiParameters2['default']),
+}, (0, _libCombinators.data)('offset_for_ref_frame[]', (0, _libDataTypes.se)(v)))), (0, _libCombinators.data)('max_num_ref_frames', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('gaps_in_frame_num_value_allowed_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('pic_width_in_mbs_minus1', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('pic_height_in_map_units_minus1', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('frame_mbs_only_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('frame_mbs_only_flag', 0), (0, _libCombinators.data)('mb_adaptive_frame_field_flag', (0, _libDataTypes.u)(1))), (0, _libCombinators.data)('direct_8x8_inference_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('frame_cropping_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('frame_cropping_flag', 1), (0, _libCombinators.data)('frame_crop_left_offset', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('frame_crop_right_offset', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('frame_crop_top_offset', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('frame_crop_bottom_offset', (0, _libDataTypes.ue)(v))), (0, _libCombinators.data)('vui_parameters_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('vui_parameters_present_flag', 1), _vuiParameters2['default']),
 // The following field is a derived value that is used for parsing
 // slice headers
-(0, _libConditionals.when)((0, _libConditionals.equals)('separate_colour_plane_flag', 1), (0, _libCombinators.data)('ChromaArrayType', (0, _libDataTypes.val)(0))), (0, _libConditionals.when)((0, _libConditionals.equals)('separate_colour_plane_flag', 0), (0, _libCombinators.data)('ChromaArrayType', getChromaFormatIdcValue)), (0, _libCombinators.verify)('seq_parameter_set')]));
+(0, _libConditionals.when)((0, _libConditionals.equals)('separate_colour_plane_flag', 1), (0, _libCombinators.data)('ChromaArrayType', (0, _libDataTypes.val)(0))), (0, _libConditionals.when)((0, _libConditionals.equals)('separate_colour_plane_flag', 0), (0, _libCombinators.data)('ChromaArrayType', getChromaFormatIdcValue)), (0, _libCombinators.verify)('seq_parameter_set'));
 
 exports['default'] = spsCodec;
 module.exports = exports['default'];
@@ -2406,6 +2419,8 @@ Object.defineProperty(exports, '__esModule', {
 });
 
 var _libCombinators = require('../../lib/combinators');
+
+var _libList = require('../../lib/list');
 
 var _libConditionals = require('../../lib/conditionals');
 
@@ -2445,11 +2460,11 @@ var sliceGroupChangeCycleBits = function sliceGroupChangeCycleBits(expGolomb, da
 
 var useWeightedPredictionTable = (0, _libConditionals.some)([(0, _libConditionals.every)([(0, _libConditionals.equals)('weighted_pred_flag', 1), (0, _libConditionals.some)([(0, _libConditionals.inArray)('slice_type', sliceType.P), (0, _libConditionals.inArray)('slice_type', sliceType.SP)])]), (0, _libConditionals.every)([(0, _libConditionals.equals)('weighted_bipred_idc', 1), (0, _libConditionals.inArray)('slice_type', sliceType.B)])]);
 
-var refPicListModification = (0, _libCombinators.list)([(0, _libConditionals.when)((0, _libConditionals.every)([(0, _libConditionals.not)((0, _libConditionals.inArray)('slice_type', sliceType.I)), (0, _libConditionals.not)((0, _libConditionals.inArray)('slice_type', sliceType.SI))]), (0, _libCombinators.list)([(0, _libCombinators.data)('ref_pic_list_modification_flag_l0', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('ref_pic_list_modification_flag_l0', 1), (0, _libConditionals.each)(function (index, output) {
+var refPicListModification = (0, _libList.list)([(0, _libConditionals.when)((0, _libConditionals.every)([(0, _libConditionals.not)((0, _libConditionals.inArray)('slice_type', sliceType.I)), (0, _libConditionals.not)((0, _libConditionals.inArray)('slice_type', sliceType.SI))]), (0, _libCombinators.data)('ref_pic_list_modification_flag_l0', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('ref_pic_list_modification_flag_l0', 1), (0, _libConditionals.each)(function (index, output) {
   return index === 0 || output.modification_of_pic_nums_idc_l0[index - 1] !== 3;
-}, (0, _libCombinators.list)([(0, _libCombinators.data)('modification_of_pic_nums_idc_l0[]', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.inArray)('modification_of_pic_nums_idc_l0[]', [0, 1]), (0, _libCombinators.data)('abs_diff_pic_num_minus1_l0[]', (0, _libDataTypes.ue)(v))), (0, _libConditionals.when)((0, _libConditionals.equals)('modification_of_pic_nums_idc_l0[]', 2), (0, _libCombinators.data)('long_term_pic_num_l0[]', (0, _libDataTypes.ue)(v)))])))])), (0, _libConditionals.when)((0, _libConditionals.inArray)('slice_type', sliceType.B), (0, _libCombinators.list)([(0, _libCombinators.data)('ref_pic_list_modification_flag_l1', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('ref_pic_list_modification_flag_l1', 1), (0, _libConditionals.each)(function (index, output) {
+}, (0, _libCombinators.data)('modification_of_pic_nums_idc_l0[]', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.inArray)('modification_of_pic_nums_idc_l0[]', [0, 1]), (0, _libCombinators.data)('abs_diff_pic_num_minus1_l0[]', (0, _libDataTypes.ue)(v))), (0, _libConditionals.when)((0, _libConditionals.equals)('modification_of_pic_nums_idc_l0[]', 2), (0, _libCombinators.data)('long_term_pic_num_l0[]', (0, _libDataTypes.ue)(v)))))), (0, _libConditionals.when)((0, _libConditionals.inArray)('slice_type', sliceType.B), (0, _libCombinators.data)('ref_pic_list_modification_flag_l1', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('ref_pic_list_modification_flag_l1', 1), (0, _libConditionals.each)(function (index, output) {
   return index === 0 || output.modification_of_pic_nums_idc_l1[index - 1] !== 3;
-}, (0, _libCombinators.list)([(0, _libCombinators.data)('modification_of_pic_nums_idc_l1[]', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.inArray)('modification_of_pic_nums_idc_l1[]', [0, 1]), (0, _libCombinators.data)('abs_diff_pic_num_minus1_l1[]', (0, _libDataTypes.ue)(v))), (0, _libConditionals.when)((0, _libConditionals.equals)('modification_of_pic_nums_idc_l1[]', 2), (0, _libCombinators.data)('long_term_pic_num_l1[]', (0, _libDataTypes.ue)(v)))])))]))]);
+}, (0, _libCombinators.data)('modification_of_pic_nums_idc_l1[]', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.inArray)('modification_of_pic_nums_idc_l1[]', [0, 1]), (0, _libCombinators.data)('abs_diff_pic_num_minus1_l1[]', (0, _libDataTypes.ue)(v))), (0, _libConditionals.when)((0, _libConditionals.equals)('modification_of_pic_nums_idc_l1[]', 2), (0, _libCombinators.data)('long_term_pic_num_l1[]', (0, _libDataTypes.ue)(v))))))]);
 
 var refPicListMvcModification = {
   encode: function encode() {
@@ -2460,25 +2475,25 @@ var refPicListMvcModification = {
   }
 };
 
-var predWeightTable = (0, _libCombinators.list)([(0, _libCombinators.data)('luma_log2_weight_denom', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.not)((0, _libConditionals.equals)('ChromaArrayType', 0)), (0, _libCombinators.data)('chroma_log2_weight_denom', (0, _libDataTypes.ue)(v))), (0, _libConditionals.each)(function (index, output) {
+var predWeightTable = (0, _libList.list)([(0, _libCombinators.data)('luma_log2_weight_denom', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.not)((0, _libConditionals.equals)('ChromaArrayType', 0)), (0, _libCombinators.data)('chroma_log2_weight_denom', (0, _libDataTypes.ue)(v))), (0, _libConditionals.each)(function (index, output) {
   return index <= output.num_ref_idx_l0_active_minus1;
-}, (0, _libCombinators.list)([(0, _libCombinators.data)('luma_weight_l0_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('luma_weight_l0_flag', 1), (0, _libCombinators.list)([(0, _libCombinators.data)('luma_weight_l0[]', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('luma_offset_l0[]', (0, _libDataTypes.se)(v)), (0, _libConditionals.when)((0, _libConditionals.not)((0, _libConditionals.equals)('ChromaArrayType', 0)), (0, _libCombinators.list)([(0, _libCombinators.data)('chroma_weight_l0_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('chroma_weight_l0_flag', 1), (0, _libCombinators.list)([(0, _libCombinators.data)('chroma_weight_l0_Cr[]', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('chroma_offset_l0_Cr[]', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('chroma_weight_l0_Cb[]', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('chroma_offset_l0_Cb[]', (0, _libDataTypes.se)(v))]))]))]))])), (0, _libConditionals.when)((0, _libConditionals.inArray)('slice_type', sliceType.B), (0, _libConditionals.each)(function (index, output) {
+}, (0, _libCombinators.data)('luma_weight_l0_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('luma_weight_l0_flag', 1), (0, _libCombinators.data)('luma_weight_l0[]', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('luma_offset_l0[]', (0, _libDataTypes.se)(v)), (0, _libConditionals.when)((0, _libConditionals.not)((0, _libConditionals.equals)('ChromaArrayType', 0)), (0, _libCombinators.data)('chroma_weight_l0_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('chroma_weight_l0_flag', 1), (0, _libCombinators.data)('chroma_weight_l0_Cr[]', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('chroma_offset_l0_Cr[]', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('chroma_weight_l0_Cb[]', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('chroma_offset_l0_Cb[]', (0, _libDataTypes.se)(v)))))), (0, _libConditionals.when)((0, _libConditionals.inArray)('slice_type', sliceType.B), (0, _libConditionals.each)(function (index, output) {
   return index <= output.num_ref_idx_l1_active_minus1;
-}, (0, _libCombinators.list)([(0, _libCombinators.data)('luma_weight_l1_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('luma_weight_l1_flag', 1), (0, _libCombinators.list)([(0, _libCombinators.data)('luma_weight_l1[]', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('luma_offset_l1[]', (0, _libDataTypes.se)(v)), (0, _libConditionals.when)((0, _libConditionals.not)((0, _libConditionals.equals)('ChromaArrayType', 0)), (0, _libCombinators.list)([(0, _libCombinators.data)('chroma_weight_l1_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('chroma_weight_l1_flag', 1), (0, _libCombinators.list)([(0, _libCombinators.data)('chroma_weight_l1_Cr[]', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('chroma_offset_l1_Cr[]', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('chroma_weight_l1_Cb[]', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('chroma_offset_l1_Cb[]', (0, _libDataTypes.se)(v))]))]))]))])))]);
+}, (0, _libCombinators.data)('luma_weight_l1_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('luma_weight_l1_flag', 1), (0, _libCombinators.data)('luma_weight_l1[]', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('luma_offset_l1[]', (0, _libDataTypes.se)(v)), (0, _libConditionals.when)((0, _libConditionals.not)((0, _libConditionals.equals)('ChromaArrayType', 0)), (0, _libCombinators.data)('chroma_weight_l1_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('chroma_weight_l1_flag', 1), (0, _libCombinators.data)('chroma_weight_l1_Cr[]', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('chroma_offset_l1_Cr[]', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('chroma_weight_l1_Cb[]', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('chroma_offset_l1_Cb[]', (0, _libDataTypes.se)(v)))))))]);
 
-var decRefPicMarking = (0, _libCombinators.list)([(0, _libConditionals.when)((0, _libConditionals.equals)('nal_unit_type', 5), (0, _libCombinators.list)([(0, _libCombinators.data)('no_output_of_prior_pics_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('long_term_reference_flag', (0, _libDataTypes.u)(1))])), (0, _libConditionals.when)((0, _libConditionals.not)((0, _libConditionals.equals)('nal_unit_type', 5)), (0, _libCombinators.list)([(0, _libCombinators.data)('adaptive_ref_pic_marking_mode_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('adaptive_ref_pic_marking_mode_flag', 1), (0, _libConditionals.each)(function (index, output) {
+var decRefPicMarking = (0, _libList.list)([(0, _libConditionals.when)((0, _libConditionals.equals)('nal_unit_type', 5), (0, _libCombinators.data)('no_output_of_prior_pics_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('long_term_reference_flag', (0, _libDataTypes.u)(1))), (0, _libConditionals.when)((0, _libConditionals.not)((0, _libConditionals.equals)('nal_unit_type', 5)), (0, _libCombinators.data)('adaptive_ref_pic_marking_mode_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('adaptive_ref_pic_marking_mode_flag', 1), (0, _libConditionals.each)(function (index, output) {
   return index === 0 || output.memory_management_control_operation[index - 1] !== 0;
-}, (0, _libCombinators.list)([(0, _libCombinators.data)('memory_management_control_operation[]', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.inArray)('memory_management_control_operation[]', [1, 3]), (0, _libCombinators.data)('difference_of_pic_nums_minus1[]', (0, _libDataTypes.ue)(v))), (0, _libConditionals.when)((0, _libConditionals.inArray)('memory_management_control_operation[]', [2]), (0, _libCombinators.data)('long_term_pic_num[]', (0, _libDataTypes.ue)(v))), (0, _libConditionals.when)((0, _libConditionals.inArray)('memory_management_control_operation[]', [3, 6]), (0, _libCombinators.data)('long_term_frame_idx[]', (0, _libDataTypes.ue)(v))), (0, _libConditionals.when)((0, _libConditionals.inArray)('memory_management_control_operation[]', [4]), (0, _libCombinators.data)('max_long_term_frame_idx_plus1[]', (0, _libDataTypes.ue)(v)))])))]))]);
+}, (0, _libCombinators.data)('memory_management_control_operation[]', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.inArray)('memory_management_control_operation[]', [1, 3]), (0, _libCombinators.data)('difference_of_pic_nums_minus1[]', (0, _libDataTypes.ue)(v))), (0, _libConditionals.when)((0, _libConditionals.inArray)('memory_management_control_operation[]', [2]), (0, _libCombinators.data)('long_term_pic_num[]', (0, _libDataTypes.ue)(v))), (0, _libConditionals.when)((0, _libConditionals.inArray)('memory_management_control_operation[]', [3, 6]), (0, _libCombinators.data)('long_term_frame_idx[]', (0, _libDataTypes.ue)(v))), (0, _libConditionals.when)((0, _libConditionals.inArray)('memory_management_control_operation[]', [4]), (0, _libCombinators.data)('max_long_term_frame_idx_plus1[]', (0, _libDataTypes.ue)(v))))))]);
 
-var sliceHeader = (0, _libCombinators.list)([(0, _libCombinators.data)('first_mb_in_slice', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('slice_type', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('pic_parameter_set_id', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.equals)('separate_colour_plane_flag', 1), (0, _libCombinators.data)('colour_plane_id', (0, _libDataTypes.u)(2))), (0, _libCombinators.data)('frame_num', (0, _libDataTypes.u)(frameNumBits)), (0, _libConditionals.when)((0, _libConditionals.equals)('frame_mbs_only_flag', 0), (0, _libCombinators.list)([(0, _libCombinators.data)('field_pic_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('field_pic_flag', 1), (0, _libCombinators.data)('bottom_field_flag', (0, _libDataTypes.u)(1)))])), (0, _libConditionals.when)((0, _libConditionals.equals)('idrPicFlag', 1), (0, _libCombinators.data)('idr_pic_id', (0, _libDataTypes.ue)(v))), (0, _libConditionals.when)((0, _libConditionals.equals)('pic_order_cnt_type', 0), (0, _libCombinators.list)([(0, _libCombinators.data)('pic_order_cnt_lsb', (0, _libDataTypes.u)(picOrderCntBits)), (0, _libConditionals.when)((0, _libConditionals.every)([(0, _libConditionals.equals)('bottom_field_pic_order_in_frame_present_flag', 1), (0, _libConditionals.not)((0, _libConditionals.equals)('field_pic_flag', 1))]), (0, _libCombinators.data)('delta_pic_order_cnt_bottom', (0, _libDataTypes.se)(v)))])), (0, _libConditionals.when)((0, _libConditionals.every)([(0, _libConditionals.equals)('pic_order_cnt_type', 1), (0, _libConditionals.not)((0, _libConditionals.equals)('delta_pic_order_always_zero_flag', 1))]), (0, _libCombinators.list)([(0, _libCombinators.data)('delta_pic_order_cnt[0]', (0, _libDataTypes.se)(v)), (0, _libConditionals.when)((0, _libConditionals.every)([(0, _libConditionals.equals)('bottom_field_pic_order_in_frame_present_flag', 1), (0, _libConditionals.not)((0, _libConditionals.equals)('field_pic_flag', 1))]), (0, _libCombinators.data)('delta_pic_order_cnt[1]', (0, _libDataTypes.se)(v)))])), (0, _libConditionals.when)((0, _libConditionals.equals)('redundant_pic_cnt_present_flag', 1), (0, _libCombinators.data)('redundant_pic_cnt', (0, _libDataTypes.ue)(v))), (0, _libConditionals.when)((0, _libConditionals.inArray)('slice_type', sliceType.B), (0, _libCombinators.data)('direct_spatial_mv_pred_flag', (0, _libDataTypes.u)(1))), (0, _libConditionals.when)((0, _libConditionals.some)([(0, _libConditionals.inArray)('slice_type', sliceType.P), (0, _libConditionals.inArray)('slice_type', sliceType.SP), (0, _libConditionals.inArray)('slice_type', sliceType.B)]), (0, _libCombinators.list)([(0, _libCombinators.data)('num_ref_idx_active_override_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('num_ref_idx_active_override_flag', 1), (0, _libCombinators.list)([(0, _libCombinators.data)('num_ref_idx_l0_active_minus1', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.inArray)('slice_type', sliceType.B), (0, _libCombinators.data)('num_ref_idx_l1_active_minus1', (0, _libDataTypes.ue)(v)))]))])), (0, _libConditionals.when)((0, _libConditionals.some)([(0, _libConditionals.equals)('nal_unit_type', 20), (0, _libConditionals.equals)('nal_unit_type', 21)]), refPicListMvcModification), (0, _libConditionals.when)((0, _libConditionals.every)([(0, _libConditionals.not)((0, _libConditionals.equals)('nal_unit_type', 20)), (0, _libConditionals.not)((0, _libConditionals.equals)('nal_unit_type', 21))]), refPicListModification), (0, _libConditionals.when)(useWeightedPredictionTable, predWeightTable), (0, _libConditionals.when)((0, _libConditionals.not)((0, _libConditionals.equals)('nal_ref_idc', 0)), decRefPicMarking), (0, _libConditionals.when)((0, _libConditionals.every)([(0, _libConditionals.equals)('entropy_coding_mode_flag', 1), (0, _libConditionals.not)((0, _libConditionals.inArray)('slice_type', sliceType.I)), (0, _libConditionals.not)((0, _libConditionals.inArray)('slice_type', sliceType.SI))]), (0, _libCombinators.data)('cabac_init_idc', (0, _libDataTypes.ue)(v))), (0, _libCombinators.data)('slice_qp_delta', (0, _libDataTypes.se)(v)), (0, _libConditionals.when)((0, _libConditionals.inArray)('slice_type', sliceType.SP), (0, _libCombinators.data)('sp_for_switch_flag', (0, _libDataTypes.u)(1))), (0, _libConditionals.when)((0, _libConditionals.some)([(0, _libConditionals.inArray)('slice_type', sliceType.SP), (0, _libConditionals.inArray)('slice_type', sliceType.SI)]), (0, _libCombinators.data)('slice_qs_delta', (0, _libDataTypes.se)(v))), (0, _libConditionals.when)((0, _libConditionals.equals)('deblocking_filter_control_present_flag', 1), (0, _libCombinators.list)([(0, _libCombinators.data)('disable_deblocking_filter_idc', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.not)((0, _libConditionals.equals)('disable_deblocking_filter_idc', 1)), (0, _libCombinators.list)([(0, _libCombinators.data)('slice_alpha_c0_offset_div2', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('slice_beta_offset_div2', (0, _libDataTypes.se)(v))]))])), (0, _libConditionals.when)((0, _libConditionals.every)([(0, _libConditionals.not)((0, _libConditionals.equals)('num_slice_groups_minus1', 0)), (0, _libConditionals.some)([(0, _libConditionals.equals)('slice_group_map_type', 3), (0, _libConditionals.equals)('slice_group_map_type', 4), (0, _libConditionals.equals)('slice_group_map_type', 5)])]), (0, _libCombinators.data)('slice_group_change_cycle', (0, _libDataTypes.u)(sliceGroupChangeCycleBits)))]);
+var sliceHeader = (0, _libList.list)([(0, _libCombinators.data)('first_mb_in_slice', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('slice_type', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('pic_parameter_set_id', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.equals)('separate_colour_plane_flag', 1), (0, _libCombinators.data)('colour_plane_id', (0, _libDataTypes.u)(2))), (0, _libCombinators.data)('frame_num', (0, _libDataTypes.u)(frameNumBits)), (0, _libConditionals.when)((0, _libConditionals.equals)('frame_mbs_only_flag', 0), (0, _libCombinators.data)('field_pic_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('field_pic_flag', 1), (0, _libCombinators.data)('bottom_field_flag', (0, _libDataTypes.u)(1)))), (0, _libConditionals.when)((0, _libConditionals.equals)('idrPicFlag', 1), (0, _libCombinators.data)('idr_pic_id', (0, _libDataTypes.ue)(v))), (0, _libConditionals.when)((0, _libConditionals.equals)('pic_order_cnt_type', 0), (0, _libCombinators.data)('pic_order_cnt_lsb', (0, _libDataTypes.u)(picOrderCntBits)), (0, _libConditionals.when)((0, _libConditionals.every)([(0, _libConditionals.equals)('bottom_field_pic_order_in_frame_present_flag', 1), (0, _libConditionals.not)((0, _libConditionals.equals)('field_pic_flag', 1))]), (0, _libCombinators.data)('delta_pic_order_cnt_bottom', (0, _libDataTypes.se)(v)))), (0, _libConditionals.when)((0, _libConditionals.every)([(0, _libConditionals.equals)('pic_order_cnt_type', 1), (0, _libConditionals.not)((0, _libConditionals.equals)('delta_pic_order_always_zero_flag', 1))]), (0, _libCombinators.data)('delta_pic_order_cnt[0]', (0, _libDataTypes.se)(v)), (0, _libConditionals.when)((0, _libConditionals.every)([(0, _libConditionals.equals)('bottom_field_pic_order_in_frame_present_flag', 1), (0, _libConditionals.not)((0, _libConditionals.equals)('field_pic_flag', 1))]), (0, _libCombinators.data)('delta_pic_order_cnt[1]', (0, _libDataTypes.se)(v)))), (0, _libConditionals.when)((0, _libConditionals.equals)('redundant_pic_cnt_present_flag', 1), (0, _libCombinators.data)('redundant_pic_cnt', (0, _libDataTypes.ue)(v))), (0, _libConditionals.when)((0, _libConditionals.inArray)('slice_type', sliceType.B), (0, _libCombinators.data)('direct_spatial_mv_pred_flag', (0, _libDataTypes.u)(1))), (0, _libConditionals.when)((0, _libConditionals.some)([(0, _libConditionals.inArray)('slice_type', sliceType.P), (0, _libConditionals.inArray)('slice_type', sliceType.SP), (0, _libConditionals.inArray)('slice_type', sliceType.B)]), (0, _libCombinators.data)('num_ref_idx_active_override_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('num_ref_idx_active_override_flag', 1), (0, _libCombinators.data)('num_ref_idx_l0_active_minus1', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.inArray)('slice_type', sliceType.B), (0, _libCombinators.data)('num_ref_idx_l1_active_minus1', (0, _libDataTypes.ue)(v))))), (0, _libConditionals.when)((0, _libConditionals.some)([(0, _libConditionals.equals)('nal_unit_type', 20), (0, _libConditionals.equals)('nal_unit_type', 21)]), refPicListMvcModification), (0, _libConditionals.when)((0, _libConditionals.every)([(0, _libConditionals.not)((0, _libConditionals.equals)('nal_unit_type', 20)), (0, _libConditionals.not)((0, _libConditionals.equals)('nal_unit_type', 21))]), refPicListModification), (0, _libConditionals.when)(useWeightedPredictionTable, predWeightTable), (0, _libConditionals.when)((0, _libConditionals.not)((0, _libConditionals.equals)('nal_ref_idc', 0)), decRefPicMarking), (0, _libConditionals.when)((0, _libConditionals.every)([(0, _libConditionals.equals)('entropy_coding_mode_flag', 1), (0, _libConditionals.not)((0, _libConditionals.inArray)('slice_type', sliceType.I)), (0, _libConditionals.not)((0, _libConditionals.inArray)('slice_type', sliceType.SI))]), (0, _libCombinators.data)('cabac_init_idc', (0, _libDataTypes.ue)(v))), (0, _libCombinators.data)('slice_qp_delta', (0, _libDataTypes.se)(v)), (0, _libConditionals.when)((0, _libConditionals.inArray)('slice_type', sliceType.SP), (0, _libCombinators.data)('sp_for_switch_flag', (0, _libDataTypes.u)(1))), (0, _libConditionals.when)((0, _libConditionals.some)([(0, _libConditionals.inArray)('slice_type', sliceType.SP), (0, _libConditionals.inArray)('slice_type', sliceType.SI)]), (0, _libCombinators.data)('slice_qs_delta', (0, _libDataTypes.se)(v))), (0, _libConditionals.when)((0, _libConditionals.equals)('deblocking_filter_control_present_flag', 1), (0, _libCombinators.data)('disable_deblocking_filter_idc', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.not)((0, _libConditionals.equals)('disable_deblocking_filter_idc', 1)), (0, _libCombinators.data)('slice_alpha_c0_offset_div2', (0, _libDataTypes.se)(v)), (0, _libCombinators.data)('slice_beta_offset_div2', (0, _libDataTypes.se)(v)))), (0, _libConditionals.when)((0, _libConditionals.every)([(0, _libConditionals.not)((0, _libConditionals.equals)('num_slice_groups_minus1', 0)), (0, _libConditionals.some)([(0, _libConditionals.equals)('slice_group_map_type', 3), (0, _libConditionals.equals)('slice_group_map_type', 4), (0, _libConditionals.equals)('slice_group_map_type', 5)])]), (0, _libCombinators.data)('slice_group_change_cycle', (0, _libDataTypes.u)(sliceGroupChangeCycleBits)))]);
 
 exports['default'] = sliceHeader;
 module.exports = exports['default'];
-},{"../../lib/combinators":21,"../../lib/conditionals":22,"../../lib/data-types":23}],11:[function(require,module,exports){
+},{"../../lib/combinators":21,"../../lib/conditionals":22,"../../lib/data-types":23,"../../lib/list":26}],11:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
-  value: true
+   value: true
 });
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
@@ -2489,9 +2504,8 @@ var _sliceHeader2 = _interopRequireDefault(_sliceHeader);
 
 var _libCombinators = require('../../lib/combinators');
 
-var sliceLayerWithoutPartitioningCodec = (0, _libCombinators.start)('slice_layer_without_partitioning', (0, _libCombinators.list)([_sliceHeader2['default']
+var sliceLayerWithoutPartitioningCodec = (0, _libCombinators.start)('slice_layer_without_partitioning', _sliceHeader2['default']);
 // TODO: slice_data
-]));
 
 exports['default'] = sliceLayerWithoutPartitioningCodec;
 module.exports = exports['default'];
@@ -2506,6 +2520,8 @@ var _libExpGolombString = require('../../lib/exp-golomb-string');
 
 var _libCombinators = require('../../lib/combinators');
 
+var _libList = require('../../lib/list');
+
 var _libConditionals = require('../../lib/conditionals');
 
 var _libDataTypes = require('../../lib/data-types');
@@ -2514,7 +2530,7 @@ var _libRbspUtils = require('../../lib/rbsp-utils');
 
 var v = null;
 
-var noopCodec = (0, _libCombinators.list)([]);
+var noopCodec = (0, _libList.list)([]);
 
 var initialCpbRemovalDelayLength = function initialCpbRemovalDelayLength(expGolomb, data, options, index) {
   return options.initial_cpb_removal_delay_length_minus1 + 1;
@@ -2535,20 +2551,20 @@ var timeOffsetBits = function timeOffsetBits(expGolomb, data, options, index) {
 var seiPayloadCodecs = {
   '0': {
     name: 'buffering_period',
-    codec: (0, _libCombinators.list)([(0, _libCombinators.data)('seq_parameter_set_id', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.equals)('nal_hrd_parameters_present_flag', 1), (0, _libConditionals.each)(function (index, output, options) {
+    codec: (0, _libList.list)([(0, _libCombinators.data)('seq_parameter_set_id', (0, _libDataTypes.ue)(v)), (0, _libConditionals.when)((0, _libConditionals.equals)('nal_hrd_parameters_present_flag', 1), (0, _libConditionals.each)(function (index, output, options) {
       return index <= options.cpb_cnt_minus1;
-    }, (0, _libCombinators.list)([(0, _libCombinators.data)('initial_cpb_removal_delay[]', (0, _libDataTypes.u)(initialCpbRemovalDelayLength)), (0, _libCombinators.data)('initial_cpb_removal_delay_offset[]', (0, _libDataTypes.u)(initialCpbRemovalDelayLength))]))), (0, _libConditionals.when)((0, _libConditionals.equals)('vcl_hrd_parameters_present_flag', 1), (0, _libConditionals.each)(function (index, output, options) {
+    }, (0, _libCombinators.data)('initial_cpb_removal_delay[]', (0, _libDataTypes.u)(initialCpbRemovalDelayLength)), (0, _libCombinators.data)('initial_cpb_removal_delay_offset[]', (0, _libDataTypes.u)(initialCpbRemovalDelayLength)))), (0, _libConditionals.when)((0, _libConditionals.equals)('vcl_hrd_parameters_present_flag', 1), (0, _libConditionals.each)(function (index, output, options) {
       return index <= options.cpb_cnt_minus1;
-    }, (0, _libCombinators.list)([(0, _libCombinators.data)('initial_cpb_removal_delay[]', (0, _libDataTypes.u)(initialCpbRemovalDelayLength)), (0, _libCombinators.data)('initial_cpb_removal_delay_offset[]', (0, _libDataTypes.u)(initialCpbRemovalDelayLength))])))])
+    }, (0, _libCombinators.data)('initial_cpb_removal_delay[]', (0, _libDataTypes.u)(initialCpbRemovalDelayLength)), (0, _libCombinators.data)('initial_cpb_removal_delay_offset[]', (0, _libDataTypes.u)(initialCpbRemovalDelayLength))))])
   },
   '1': {
     name: 'pic_timing',
-    codec: (0, _libCombinators.list)([(0, _libConditionals.when)((0, _libConditionals.some)([(0, _libConditionals.equals)('nal_hrd_parameters_present_flag', 1), (0, _libConditionals.equals)('vcl_hrd_parameters_present_flag', 1)]), (0, _libCombinators.list)([(0, _libCombinators.data)('cpb_removal_delay', (0, _libDataTypes.u)(cpbRemovalDelayBits)), (0, _libCombinators.data)('dpb_output_delay', (0, _libDataTypes.u)(dpbOutputDelayBits))])), (0, _libConditionals.when)((0, _libConditionals.equals)('pic_struct_present_flag', 1), (0, _libCombinators.list)([(0, _libCombinators.data)('pic_struct', (0, _libDataTypes.u)(4)),
+    codec: (0, _libList.list)([(0, _libConditionals.when)((0, _libConditionals.some)([(0, _libConditionals.equals)('nal_hrd_parameters_present_flag', 1), (0, _libConditionals.equals)('vcl_hrd_parameters_present_flag', 1)]), (0, _libCombinators.data)('cpb_removal_delay', (0, _libDataTypes.u)(cpbRemovalDelayBits)), (0, _libCombinators.data)('dpb_output_delay', (0, _libDataTypes.u)(dpbOutputDelayBits))), (0, _libConditionals.when)((0, _libConditionals.equals)('pic_struct_present_flag', 1), (0, _libCombinators.data)('pic_struct', (0, _libDataTypes.u)(4)),
 
     // Interpret pic_struct
     (0, _libConditionals.when)((0, _libConditionals.equals)('pic_struct', 0), (0, _libCombinators.data)('NumClockTS', (0, _libDataTypes.val)(1))), (0, _libConditionals.when)((0, _libConditionals.equals)('pic_struct', 1), (0, _libCombinators.data)('NumClockTS', (0, _libDataTypes.val)(1))), (0, _libConditionals.when)((0, _libConditionals.equals)('pic_struct', 2), (0, _libCombinators.data)('NumClockTS', (0, _libDataTypes.val)(1))), (0, _libConditionals.when)((0, _libConditionals.equals)('pic_struct', 3), (0, _libCombinators.data)('NumClockTS', (0, _libDataTypes.val)(2))), (0, _libConditionals.when)((0, _libConditionals.equals)('pic_struct', 4), (0, _libCombinators.data)('NumClockTS', (0, _libDataTypes.val)(2))), (0, _libConditionals.when)((0, _libConditionals.equals)('pic_struct', 5), (0, _libCombinators.data)('NumClockTS', (0, _libDataTypes.val)(3))), (0, _libConditionals.when)((0, _libConditionals.equals)('pic_struct', 6), (0, _libCombinators.data)('NumClockTS', (0, _libDataTypes.val)(3))), (0, _libConditionals.when)((0, _libConditionals.equals)('pic_struct', 7), (0, _libCombinators.data)('NumClockTS', (0, _libDataTypes.val)(2))), (0, _libConditionals.when)((0, _libConditionals.equals)('pic_struct', 8), (0, _libCombinators.data)('NumClockTS', (0, _libDataTypes.val)(2))), (0, _libConditionals.each)(function (index, output) {
       return index < output.NumClockTS;
-    }, (0, _libCombinators.list)([(0, _libCombinators.data)('clock_timestamp_flag[]', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('clock_timestamp_flag[]', 1), (0, _libCombinators.list)([(0, _libCombinators.data)('ct_type[]', (0, _libDataTypes.u)(2)), (0, _libCombinators.data)('nuit_field_based_flag[]', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('counting_type[]', (0, _libDataTypes.u)(5)), (0, _libCombinators.data)('full_timestamp_flag[]', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('discontinuity_flag[]', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('cnt_dropped_flag[]', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('n_frames[]', (0, _libDataTypes.u)(8)), (0, _libConditionals.when)((0, _libConditionals.equals)('full_timestamp_flag[]', 1), (0, _libCombinators.list)([(0, _libCombinators.data)('seconds_value[]', (0, _libDataTypes.u)(6)), (0, _libCombinators.data)('minutes_value[]', (0, _libDataTypes.u)(6)), (0, _libCombinators.data)('hours_value[]', (0, _libDataTypes.u)(5))])), (0, _libConditionals.when)((0, _libConditionals.equals)('full_timestamp_flag[]', 0), (0, _libCombinators.list)([(0, _libCombinators.data)('seconds_flag[]', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('seconds_flag[]', 1), (0, _libCombinators.list)([(0, _libCombinators.data)('seconds_value[]', (0, _libDataTypes.u)(6)), (0, _libCombinators.data)('minutes_flag[]', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('minutes_flag[]', 1), (0, _libCombinators.list)([(0, _libCombinators.data)('minutes_value[]', (0, _libDataTypes.u)(6)), (0, _libCombinators.data)('hours_flag[]', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('hours_flag[]', 1), (0, _libCombinators.data)('hours_value[]', (0, _libDataTypes.u)(5)))]))]))])), (0, _libConditionals.when)((0, _libConditionals.gt)('time_offset_length', 0), (0, _libCombinators.data)('time_offset', (0, _libDataTypes.u)(timeOffsetBits)))]))]))]))])
+    }, (0, _libCombinators.data)('clock_timestamp_flag[]', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('clock_timestamp_flag[]', 1), (0, _libCombinators.data)('ct_type[]', (0, _libDataTypes.u)(2)), (0, _libCombinators.data)('nuit_field_based_flag[]', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('counting_type[]', (0, _libDataTypes.u)(5)), (0, _libCombinators.data)('full_timestamp_flag[]', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('discontinuity_flag[]', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('cnt_dropped_flag[]', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('n_frames[]', (0, _libDataTypes.u)(8)), (0, _libConditionals.when)((0, _libConditionals.equals)('full_timestamp_flag[]', 1), (0, _libCombinators.data)('seconds_value[]', (0, _libDataTypes.u)(6)), (0, _libCombinators.data)('minutes_value[]', (0, _libDataTypes.u)(6)), (0, _libCombinators.data)('hours_value[]', (0, _libDataTypes.u)(5))), (0, _libConditionals.when)((0, _libConditionals.equals)('full_timestamp_flag[]', 0), (0, _libCombinators.data)('seconds_flag[]', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('seconds_flag[]', 1), (0, _libCombinators.data)('seconds_value[]', (0, _libDataTypes.u)(6)), (0, _libCombinators.data)('minutes_flag[]', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('minutes_flag[]', 1), (0, _libCombinators.data)('minutes_value[]', (0, _libDataTypes.u)(6)), (0, _libCombinators.data)('hours_flag[]', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('hours_flag[]', 1), (0, _libCombinators.data)('hours_value[]', (0, _libDataTypes.u)(5)))))), (0, _libConditionals.when)((0, _libConditionals.gt)('time_offset_length', 0), (0, _libCombinators.data)('time_offset', (0, _libDataTypes.u)(timeOffsetBits))))))])
   },
   '2': {
     name: 'pan_scan_rect'
@@ -2558,16 +2574,16 @@ var seiPayloadCodecs = {
   },
   '4': {
     name: 'user_data_registered_itu_t_t35',
-    codec: (0, _libCombinators.list)([(0, _libCombinators.data)('itu_t_t35_country_code', (0, _libDataTypes.u)(8)), (0, _libCombinators.data)('itu_t_t35_provider_code', (0, _libDataTypes.u)(16)), (0, _libConditionals.when)((0, _libConditionals.equals)('itu_t_t35_provider_code', 49), (0, _libCombinators.data)('ATSC_user_identifier', (0, _libDataTypes.u)(32))), (0, _libConditionals.when)((0, _libConditionals.inArray)('itu_t_t35_provider_code', [47, 49]), (0, _libCombinators.data)('ATSC1_data_user_data_type_code', (0, _libDataTypes.u)(8))), (0, _libConditionals.when)((0, _libConditionals.equals)('itu_t_t35_provider_code', 47), (0, _libCombinators.data)('DIRECTV_user_data_length', (0, _libDataTypes.u)(8))), (0, _libCombinators.data)('process_em_data_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('process_cc_data_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('additional_data_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('cc_count', (0, _libDataTypes.u)(5)), (0, _libCombinators.data)('em_data', (0, _libDataTypes.u)(8)), (0, _libConditionals.each)(function (index, output) {
+    codec: (0, _libList.list)([(0, _libCombinators.data)('itu_t_t35_country_code', (0, _libDataTypes.u)(8)), (0, _libCombinators.data)('itu_t_t35_provider_code', (0, _libDataTypes.u)(16)), (0, _libConditionals.when)((0, _libConditionals.equals)('itu_t_t35_provider_code', 49), (0, _libCombinators.data)('ATSC_user_identifier', (0, _libDataTypes.u)(32))), (0, _libConditionals.when)((0, _libConditionals.inArray)('itu_t_t35_provider_code', [47, 49]), (0, _libCombinators.data)('ATSC1_data_user_data_type_code', (0, _libDataTypes.u)(8))), (0, _libConditionals.when)((0, _libConditionals.equals)('itu_t_t35_provider_code', 47), (0, _libCombinators.data)('DIRECTV_user_data_length', (0, _libDataTypes.u)(8))), (0, _libCombinators.data)('process_em_data_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('process_cc_data_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('additional_data_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('cc_count', (0, _libDataTypes.u)(5)), (0, _libCombinators.data)('em_data', (0, _libDataTypes.u)(8)), (0, _libConditionals.each)(function (index, output) {
       return index < output.cc_count;
-    }, (0, _libCombinators.newObj)('cc_data_pkts[]', (0, _libCombinators.list)([(0, _libCombinators.data)('type', (0, _libDataTypes.val)('cc_data_pkt')), (0, _libCombinators.data)('marker_bits', (0, _libDataTypes.u)(5)), (0, _libCombinators.data)('cc_valid', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('cc_type', (0, _libDataTypes.u)(2)), (0, _libCombinators.data)('cc_data_1', (0, _libDataTypes.u)(8)), (0, _libCombinators.data)('cc_data_2', (0, _libDataTypes.u)(8))]))), (0, _libCombinators.data)('marker_bits', (0, _libDataTypes.u)(8))])
+    }, (0, _libCombinators.newObj)('cc_data_pkts[]', (0, _libCombinators.data)('type', (0, _libDataTypes.val)('cc_data_pkt')), (0, _libCombinators.data)('marker_bits', (0, _libDataTypes.u)(5)), (0, _libCombinators.data)('cc_valid', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('cc_type', (0, _libDataTypes.u)(2)), (0, _libCombinators.data)('cc_data_1', (0, _libDataTypes.u)(8)), (0, _libCombinators.data)('cc_data_2', (0, _libDataTypes.u)(8)))), (0, _libCombinators.data)('marker_bits', (0, _libDataTypes.u)(8))])
   },
   '5': {
     name: 'user_data_unregistered'
   },
   '6': {
     name: 'recovery_point',
-    codec: (0, _libCombinators.list)([(0, _libCombinators.data)('recovery_frame_cnt', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('exact_match_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('broken_link_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('changing_slice_group_idc', (0, _libDataTypes.u)(2))])
+    codec: (0, _libList.list)([(0, _libCombinators.data)('recovery_frame_cnt', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('exact_match_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('broken_link_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('changing_slice_group_idc', (0, _libDataTypes.u)(2))])
   },
   '7': {
     name: 'dec_ref_pic_marking_repetition'
@@ -2689,7 +2705,14 @@ var seiPayloadCodecs = {
 };
 
 var seiPayloadParser = {
-  decode: function decode(expGolomb, output, options, index) {
+  decode: function decode(_ref) {
+    var expGolomb = _ref.expGolomb;
+    var output = _ref.output;
+    var options = _ref.options;
+    var indexes = _ref.indexes;
+    var path = _ref.path;
+
+    var index = indexes[0];
     var message = {
       payloadType: 0,
       payloadSize: 0
@@ -2715,7 +2738,13 @@ var seiPayloadParser = {
 
       if (payloadCodec.codec) {
         var subExpGolomb = new _libExpGolombString.ExpGolombDecoder(bitString);
-        payloadCodec.codec.decode(subExpGolomb, message, options);
+        payloadCodec.codec.decode({
+          expGolomb: subExpGolomb,
+          output: message,
+          options: options,
+          path: path,
+          indexes: indexes
+        });
       } else {
         message.data = (0, _libRbspUtils.bitStringToTypedArray)(bitString);
       }
@@ -2728,8 +2757,15 @@ var seiPayloadParser = {
 
     return output;
   },
-  encode: function encode(expGolomb, input, options, index) {
+  encode: function encode(_ref2) {
+    var expGolomb = _ref2.expGolomb;
+    var input = _ref2.input;
+    var options = _ref2.options;
+    var indexes = _ref2.indexes;
+    var path = _ref2.path;
+
     // This function was never tested...
+    var index = indexes[0];
     var message = input[index];
     var payloadTypeRemaining = message.payloadType;
 
@@ -2751,7 +2787,13 @@ var seiPayloadParser = {
 
     if (payloadCodec && payloadCodec.codec) {
       var subExpGolomb = new _libExpGolombString.ExpGolombEncoder();
-      payloadCodec.codec.encode(subExpGolomb, message, options);
+      payloadCodec.codec.encode({
+        expGolomb: subExpGolomb,
+        input: message,
+        options: options,
+        path: path,
+        indexes: indexes
+      });
       var bits = subExpGolomb.bitReservoir;
 
       if (bits.length % 8 !== 0) {
@@ -2776,7 +2818,7 @@ var seiCodec = (0, _libCombinators.startArray)('sei_message', (0, _libConditiona
 
 exports['default'] = seiCodec;
 module.exports = exports['default'];
-},{"../../lib/combinators":21,"../../lib/conditionals":22,"../../lib/data-types":23,"../../lib/exp-golomb-string":25,"../../lib/rbsp-utils":27}],13:[function(require,module,exports){
+},{"../../lib/combinators":21,"../../lib/conditionals":22,"../../lib/data-types":23,"../../lib/exp-golomb-string":25,"../../lib/list":26,"../../lib/rbsp-utils":30}],13:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -2786,6 +2828,8 @@ Object.defineProperty(exports, '__esModule', {
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
 var _libCombinators = require('../../lib/combinators');
+
+var _libList = require('../../lib/list');
 
 var _libConditionals = require('../../lib/conditionals');
 
@@ -2797,7 +2841,7 @@ var _hdrParameters2 = _interopRequireDefault(_hdrParameters);
 
 var v = null;
 
-var sampleRatioCalc = (0, _libCombinators.list)([
+var sampleRatioCalc = (0, _libList.list)([
 /*
   1:1
  7680x4320 16:9 frame without horizontal overscan
@@ -2889,15 +2933,15 @@ var sampleRatioCalc = (0, _libCombinators.list)([
  */
 (0, _libConditionals.when)((0, _libConditionals.equals)('aspect_ratio_idc', 16), (0, _libCombinators.data)('sample_ratio', (0, _libDataTypes.val)(2 / 1))),
 /* Extended_SAR */
-(0, _libConditionals.when)((0, _libConditionals.equals)('aspect_ratio_idc', 255), (0, _libCombinators.list)([(0, _libCombinators.data)('sar_width', (0, _libDataTypes.u)(16)), (0, _libCombinators.data)('sar_height', (0, _libDataTypes.u)(16)), (0, _libCombinators.data)('sample_ratio', (0, _libDataTypes.val)(function (expGolomb, output, options) {
+(0, _libConditionals.when)((0, _libConditionals.equals)('aspect_ratio_idc', 255), (0, _libCombinators.data)('sar_width', (0, _libDataTypes.u)(16)), (0, _libCombinators.data)('sar_height', (0, _libDataTypes.u)(16)), (0, _libCombinators.data)('sample_ratio', (0, _libDataTypes.val)(function (expGolomb, output, options) {
   return output.sar_width / output.sar_height;
-}))]))]);
+})))]);
 
-var vuiParamters = (0, _libCombinators.list)([(0, _libCombinators.data)('aspect_ratio_info_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('aspect_ratio_info_present_flag', 1), (0, _libCombinators.list)([(0, _libCombinators.data)('aspect_ratio_idc', (0, _libDataTypes.u)(8)), sampleRatioCalc])), (0, _libCombinators.data)('overscan_info_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('overscan_info_present_flag', 1), (0, _libCombinators.data)('overscan_appropriate_flag', (0, _libDataTypes.u)(1))), (0, _libCombinators.data)('video_signal_type_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('video_signal_type_present_flag', 1), (0, _libCombinators.list)([(0, _libCombinators.data)('video_format', (0, _libDataTypes.u)(3)), (0, _libCombinators.data)('video_full_range_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('colour_description_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('colour_description_present_flag', 1), (0, _libCombinators.list)([(0, _libCombinators.data)('colour_primaries', (0, _libDataTypes.u)(8)), (0, _libCombinators.data)('transfer_characteristics', (0, _libDataTypes.u)(8)), (0, _libCombinators.data)('matrix_coefficients', (0, _libDataTypes.u)(8))]))])), (0, _libCombinators.data)('chroma_loc_info_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('chroma_loc_info_present_flag', 1), (0, _libCombinators.list)([(0, _libCombinators.data)('chroma_sample_loc_type_top_field', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('chroma_sample_loc_type_bottom_field', (0, _libDataTypes.ue)(v))])), (0, _libCombinators.data)('timing_info_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('timing_info_present_flag', 1), (0, _libCombinators.list)([(0, _libCombinators.data)('num_units_in_tick', (0, _libDataTypes.u)(32)), (0, _libCombinators.data)('time_scale', (0, _libDataTypes.u)(32)), (0, _libCombinators.data)('fixed_frame_rate_flag', (0, _libDataTypes.u)(1))])), (0, _libCombinators.data)('nal_hrd_parameters_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('nal_hrd_parameters_present_flag', 1), _hdrParameters2['default']), (0, _libCombinators.data)('vcl_hrd_parameters_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('vcl_hrd_parameters_present_flag', 1), _hdrParameters2['default']), (0, _libConditionals.when)((0, _libConditionals.some)([(0, _libConditionals.equals)('nal_hrd_parameters_present_flag', 1), (0, _libConditionals.equals)('vcl_hrd_parameters_present_flag', 1)]), (0, _libCombinators.data)('low_delay_hrd_flag', (0, _libDataTypes.u)(1))), (0, _libCombinators.data)('pic_struct_present_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('bitstream_restriction_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('bitstream_restriction_flag', 1), (0, _libCombinators.list)([(0, _libCombinators.data)('motion_vectors_over_pic_boundaries_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('max_bytes_per_pic_denom', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('max_bits_per_mb_denom', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('log2_max_mv_length_horizontal', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('log2_max_mv_length_vertical', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('max_num_reorder_frames', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('max_dec_frame_buffering', (0, _libDataTypes.ue)(v))]))]);
+var vuiParamters = (0, _libList.list)([(0, _libCombinators.data)('aspect_ratio_info_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('aspect_ratio_info_present_flag', 1), (0, _libCombinators.data)('aspect_ratio_idc', (0, _libDataTypes.u)(8)), sampleRatioCalc), (0, _libCombinators.data)('overscan_info_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('overscan_info_present_flag', 1), (0, _libCombinators.data)('overscan_appropriate_flag', (0, _libDataTypes.u)(1))), (0, _libCombinators.data)('video_signal_type_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('video_signal_type_present_flag', 1), (0, _libCombinators.data)('video_format', (0, _libDataTypes.u)(3)), (0, _libCombinators.data)('video_full_range_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('colour_description_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('colour_description_present_flag', 1), (0, _libCombinators.data)('colour_primaries', (0, _libDataTypes.u)(8)), (0, _libCombinators.data)('transfer_characteristics', (0, _libDataTypes.u)(8)), (0, _libCombinators.data)('matrix_coefficients', (0, _libDataTypes.u)(8)))), (0, _libCombinators.data)('chroma_loc_info_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('chroma_loc_info_present_flag', 1), (0, _libCombinators.data)('chroma_sample_loc_type_top_field', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('chroma_sample_loc_type_bottom_field', (0, _libDataTypes.ue)(v))), (0, _libCombinators.data)('timing_info_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('timing_info_present_flag', 1), (0, _libCombinators.data)('num_units_in_tick', (0, _libDataTypes.u)(32)), (0, _libCombinators.data)('time_scale', (0, _libDataTypes.u)(32)), (0, _libCombinators.data)('fixed_frame_rate_flag', (0, _libDataTypes.u)(1))), (0, _libCombinators.data)('nal_hrd_parameters_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('nal_hrd_parameters_present_flag', 1), _hdrParameters2['default']), (0, _libCombinators.data)('vcl_hrd_parameters_present_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('vcl_hrd_parameters_present_flag', 1), _hdrParameters2['default']), (0, _libConditionals.when)((0, _libConditionals.some)([(0, _libConditionals.equals)('nal_hrd_parameters_present_flag', 1), (0, _libConditionals.equals)('vcl_hrd_parameters_present_flag', 1)]), (0, _libCombinators.data)('low_delay_hrd_flag', (0, _libDataTypes.u)(1))), (0, _libCombinators.data)('pic_struct_present_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('bitstream_restriction_flag', (0, _libDataTypes.u)(1)), (0, _libConditionals.when)((0, _libConditionals.equals)('bitstream_restriction_flag', 1), (0, _libCombinators.data)('motion_vectors_over_pic_boundaries_flag', (0, _libDataTypes.u)(1)), (0, _libCombinators.data)('max_bytes_per_pic_denom', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('max_bits_per_mb_denom', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('log2_max_mv_length_horizontal', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('log2_max_mv_length_vertical', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('max_num_reorder_frames', (0, _libDataTypes.ue)(v)), (0, _libCombinators.data)('max_dec_frame_buffering', (0, _libDataTypes.ue)(v)))]);
 
 exports['default'] = vuiParamters;
 module.exports = exports['default'];
-},{"../../lib/combinators":21,"../../lib/conditionals":22,"../../lib/data-types":23,"./hdr-parameters":5}],14:[function(require,module,exports){
+},{"../../lib/combinators":21,"../../lib/conditionals":22,"../../lib/data-types":23,"../../lib/list":26,"./hdr-parameters":5}],14:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -5208,10 +5252,22 @@ var _rbspUtils = require('./rbsp-utils');
 
 var _mergeObj = require('./merge-obj');
 
+var _list = require('./list');
+
+var _propertyHandler3 = require('./property-handler');
+
+var _propertyHelpers = require('./property-helpers');
+
 /**
  * General ExpGolomb-Encoded-Structure Parse Functions
  */
-var start = function start(name, parseFn) {
+var start = function start(name) {
+  for (var _len = arguments.length, parseFns = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+    parseFns[_key - 1] = arguments[_key];
+  }
+
+  var parseFn = (0, _list.list)(parseFns, true);
+
   return {
     decode: function decode(input, options, output) {
       var rawBitString = (0, _rbspUtils.typedArrayToBitString)(input);
@@ -5223,12 +5279,21 @@ var start = function start(name, parseFn) {
       if (!options.no_trailer_bits) {
         bitString = (0, _rbspUtils.removeRBSPTrailingBits)(rawBitString);
       }
+
       var expGolombDecoder = new _expGolombString.ExpGolombDecoder(bitString);
 
       try {
-        return parseFn.decode(expGolombDecoder, output, options);
+        return parseFn.decode({
+          options: options,
+          output: output,
+          expGolomb: expGolombDecoder,
+          indexes: [],
+          path: [name]
+        });
       } catch (e) {
-        return e;
+        // Ensure that we always return `output` because we might have
+        // successfully parsed something!
+        return output;
       }
     },
     encode: function encode(input, options) {
@@ -5236,7 +5301,13 @@ var start = function start(name, parseFn) {
 
       options = options || {};
 
-      parseFn.encode(expGolombEncoder, input, options);
+      parseFn.encode({
+        options: options,
+        input: input,
+        expGolomb: expGolombEncoder,
+        indexes: [],
+        path: [name]
+      });
 
       var output = expGolombEncoder.bitReservoir;
       var bitString = (0, _rbspUtils.appendRBSPTrailingBits)(output);
@@ -5248,8 +5319,12 @@ var start = function start(name, parseFn) {
 };
 
 exports.start = start;
-var startArray = function startArray(name, parseFn) {
-  var startObj = start(name, parseFn);
+var startArray = function startArray(name) {
+  for (var _len2 = arguments.length, parseFns = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+    parseFns[_key2 - 1] = arguments[_key2];
+  }
+
+  var startObj = start.apply(undefined, [name].concat(parseFns));
 
   return {
     decode: function decode(input, options) {
@@ -5260,93 +5335,58 @@ var startArray = function startArray(name, parseFn) {
 };
 
 exports.startArray = startArray;
-var list = function list(parseFns) {
-  return {
-    decode: function decode(expGolomb, output, options, index) {
-      parseFns.forEach(function (fn) {
-        output = fn.decode(expGolomb, output, options, index) || output;
-      });
-
-      return output;
-    },
-    encode: function encode(expGolomb, input, options, index) {
-      parseFns.forEach(function (fn) {
-        fn.encode(expGolomb, input, options, index);
-      });
-    }
-  };
-};
-
-exports.list = list;
 var data = function data(name, dataType) {
-  var nameSplit = name.split(/\[(\d*)\]/);
-  var property = nameSplit[0];
-  var indexOverride = undefined;
-  var nameArray = undefined;
+  var _propertyHandler = (0, _propertyHandler3.propertyHandler)(name);
 
-  // The `nameSplit` array can either be 1 or 3 long
-  if (nameSplit && nameSplit[0] !== '') {
-    if (nameSplit.length > 1) {
-      nameArray = true;
-      indexOverride = parseFloat(nameSplit[1]);
-
-      if (isNaN(indexOverride)) {
-        indexOverride = undefined;
-      }
-    }
-  } else {
-    throw new Error('ExpGolombError: Invalid name "' + name + '".');
-  }
+  var propertyName = _propertyHandler.propertyName;
+  var indexArray = _propertyHandler.indexArray;
 
   return {
     name: name,
-    decode: function decode(expGolomb, output, options, index) {
+    decode: function decode(_ref) {
+      var expGolomb = _ref.expGolomb;
+      var output = _ref.output;
+      var options = _ref.options;
+      var indexes = _ref.indexes;
+      var path = _ref.path;
+
       var value = undefined;
 
-      if (typeof indexOverride === 'number') {
-        index = indexOverride;
+      try {
+        value = dataType.read(expGolomb, output, options, indexes);
+      } catch (e) {
+        output['Parse Error:'] = e.message + ' at ' + path.join('/');
+        throw e;
       }
 
-      value = dataType.read(expGolomb, output, options, index);
-
-      if (!nameArray) {
-        output[property] = value;
+      if (!indexArray) {
+        output[propertyName] = value;
       } else {
-        if (!Array.isArray(output[property])) {
-          output[property] = [];
-        }
-
-        if (index !== undefined) {
-          output[property][index] = value;
-        } else {
-          output[property].push(value);
-        }
+        (0, _propertyHelpers.writeProperty)(output, options, propertyName, (0, _propertyHelpers.indexArrayMerge)(indexes, indexArray), value);
       }
 
       return output;
     },
-    encode: function encode(expGolomb, input, options, index) {
+    encode: function encode(_ref2) {
+      var expGolomb = _ref2.expGolomb;
+      var input = _ref2.input;
+      var options = _ref2.options;
+      var indexes = _ref2.indexes;
+      var path = _ref2.path;
+
       var value = undefined;
 
-      if (typeof indexOverride === 'number') {
-        index = indexOverride;
-      }
-
-      if (!nameArray) {
-        value = input[property];
-      } else if (Array.isArray(input[property])) {
-        if (index !== undefined) {
-          value = input[property][index];
-        } else {
-          value = input[property].shift();
-        }
+      if (!indexArray) {
+        value = input[propertyName];
+      } else {
+        value = (0, _propertyHelpers.getProperty)(input, options, propertyName, (0, _propertyHelpers.indexArrayMerge)(indexes, indexArray));
       }
 
       if (typeof value !== 'number') {
         return;
       }
 
-      value = dataType.write(expGolomb, input, options, index, value);
+      value = dataType.write(expGolomb, input, options, indexes, value);
     }
   };
 };
@@ -5354,84 +5394,92 @@ var data = function data(name, dataType) {
 exports.data = data;
 var debug = function debug(prefix) {
   return {
-    decode: function decode(expGolomb, output, options, index) {
-      console.log(prefix, expGolomb.bitReservoir, output, options, index);
+    decode: function decode(_ref3) {
+      var expGolomb = _ref3.expGolomb;
+      var output = _ref3.output;
+      var options = _ref3.options;
+      var indexes = _ref3.indexes;
+      var path = _ref3.path;
+
+      console.log(prefix, path.join(','), expGolomb.bitReservoir, output, options, indexes);
     },
-    encode: function encode(expGolomb, input, options, index) {
-      console.log(prefix, expGolomb.bitReservoir, input, options, index);
+    encode: function encode(_ref4) {
+      var expGolomb = _ref4.expGolomb;
+      var input = _ref4.input;
+      var options = _ref4.options;
+      var indexes = _ref4.indexes;
+      var path = _ref4.path;
+
+      console.log(prefix, path.join(','), expGolomb.bitReservoir, input, options, indexes);
     }
   };
 };
 
 exports.debug = debug;
-var newObj = function newObj(name, parseFn) {
-  var nameSplit = name.split(/\[(\d*)\]/);
-  var property = nameSplit[0];
-  var indexOverride = undefined;
-  var nameArray = undefined;
-
-  // The `nameSplit` array can either be 1 or 3 long
-  if (nameSplit && nameSplit[0] !== '') {
-    if (nameSplit.length > 1) {
-      nameArray = true;
-      indexOverride = parseFloat(nameSplit[1]);
-
-      if (isNaN(indexOverride)) {
-        indexOverride = undefined;
-      }
-    }
-  } else {
-    throw new Error('ExpGolombError: Invalid name "' + name + '".');
+var newObj = function newObj(name) {
+  for (var _len3 = arguments.length, parseFns = Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
+    parseFns[_key3 - 1] = arguments[_key3];
   }
+
+  var _propertyHandler2 = (0, _propertyHandler3.propertyHandler)(name);
+
+  var propertyName = _propertyHandler2.propertyName;
+  var indexArray = _propertyHandler2.indexArray;
+
+  var parseFn = (0, _list.list)(parseFns, true);
 
   return {
     name: name,
-    decode: function decode(expGolomb, output, options, index) {
-      var value = undefined;
+    decode: function decode(_ref5) {
+      var expGolomb = _ref5.expGolomb;
+      var output = _ref5.output;
+      var options = _ref5.options;
+      var indexes = _ref5.indexes;
+      var path = _ref5.path;
 
-      if (typeof indexOverride === 'number') {
-        index = indexOverride;
-      }
+      var newPath = path.concat(name);
+      var value = parseFn.decode({
+        expGolomb: expGolomb,
+        output: Object.create(output),
+        options: options,
+        indexes: indexes,
+        path: newPath
+      });
 
-      value = parseFn.decode(expGolomb, Object.create(output), options, index);
-
-      if (!nameArray) {
-        output[property] = value;
+      if (!indexArray) {
+        output[propertyName] = value;
       } else {
-        if (!Array.isArray(output[property])) {
-          output[property] = [];
-        }
-
-        if (index !== undefined) {
-          output[property][index] = value;
-        } else {
-          output[property].push(value);
-        }
+        (0, _propertyHelpers.writeProperty)(output, options, propertyName, (0, _propertyHelpers.indexArrayMerge)(indexes, indexArray), value);
       }
 
       return output;
     },
-    encode: function encode(expGolomb, input, options, index) {
+    encode: function encode(_ref6) {
+      var expGolomb = _ref6.expGolomb;
+      var input = _ref6.input;
+      var options = _ref6.options;
+      var indexes = _ref6.indexes;
+
       var value = undefined;
 
-      if (typeof indexOverride === 'number') {
-        index = indexOverride;
-      }
-
       if (!nameArray) {
-        value = input[property];
-      } else if (Array.isArray(input[property])) {
-        if (index !== undefined) {
-          value = input[property][index];
-        } else {
-          value = input[property].shift();
-        }
+        value = input[propertyName];
+      } else {
+        value = (0, _propertyHelpers.getProperty)(input, options, propertyName, (0, _propertyHelpers.indexArrayMerge)(indexes, indexArray));
       }
 
       if (typeof value !== 'number') {
         return;
       }
-      parseFn.encode(expGolomb, value, options, index);
+
+      var newPath = path.concat(name);
+      parseFn.encode({
+        expGolomb: expGolomb,
+        input: value,
+        options: options,
+        indexes: indexes,
+        path: newPath
+      });
     }
   };
 };
@@ -5439,225 +5487,328 @@ var newObj = function newObj(name, parseFn) {
 exports.newObj = newObj;
 var verify = function verify(name) {
   return {
-    decode: function decode(expGolomb, output, options, index) {
-      var len = expGolomb.bitReservoir.length;
-      if (len !== 0) {
-        console.trace('ERROR: ' + name + ' was not completely parsed. There were (' + len + ') bits remaining!');
-        console.log(expGolomb.originalBitReservoir);
-      }
-    },
-    encode: function encode(expGolomb, input, options, index) {}
-  };
-};
+    decode: function decode(_ref7) {
+      var expGolomb = _ref7.expGolomb;
+      var output = _ref7.output;
+      var options = _ref7.options;
+      var indexes = _ref7.indexes;
 
-exports.verify = verify;
-var pickOptions = function pickOptions(property, value) {
-  return {
-    decode: function decode(expGolomb, output, options, index) {
-      if (typeof options[property] !== undefined) {
-        //     options[property][value];
+      var len = expGolomb.bitReservoir.length;
+
+      if (len !== 0) {
+        output['Validation Error:'] = name + ' was not completely parsed - there were (' + len + ') bits remaining';
       }
     },
-    encode: function encode(expGolomb, input, options, index) {
-      if (typeof options[property] !== undefined) {
-        //   options.values options[property][value];
-      }
+    encode: function encode(_ref8) {
+      var expGolomb = _ref8.expGolomb;
+      var input = _ref8.input;
+      var options = _ref8.options;
+      var indexes = _ref8.indexes;
     }
   };
 };
-exports.pickOptions = pickOptions;
-},{"./exp-golomb-string":25,"./merge-obj":26,"./rbsp-utils":27}],22:[function(require,module,exports){
+exports.verify = verify;
+},{"./exp-golomb-string":25,"./list":26,"./merge-obj":27,"./property-handler":28,"./property-helpers":29,"./rbsp-utils":30}],22:[function(require,module,exports){
 'use strict';
-
 Object.defineProperty(exports, '__esModule', {
   value: true
 });
-var when = function when(conditionFn, parseFn) {
+
+var _list = require('./list');
+
+var _propertyHandler4 = require('./property-handler');
+
+var _propertyHelpers = require('./property-helpers');
+
+var when = function when(conditionFn) {
+  for (var _len = arguments.length, parseFns = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+    parseFns[_key - 1] = arguments[_key];
+  }
+
+  var parseFn = (0, _list.list)(parseFns, true);
+
   return {
-    decode: function decode(expGolomb, output, options, index) {
-      if (conditionFn(output, options, index)) {
-        return parseFn.decode(expGolomb, output, options, index);
+    decode: function decode(_ref) {
+      var expGolomb = _ref.expGolomb;
+      var output = _ref.output;
+      var options = _ref.options;
+      var indexes = _ref.indexes;
+      var path = _ref.path;
+
+      var newPath = path.concat('[when]');
+
+      if (conditionFn(output, options, indexes)) {
+        return parseFn.decode({
+          expGolomb: expGolomb,
+          output: output,
+          options: options,
+          indexes: indexes,
+          path: newPath
+        });
       }
 
       return output;
     },
-    encode: function encode(expGolomb, input, options, index) {
-      if (conditionFn(input, options, index)) {
-        parseFn.encode(expGolomb, input, options, index);
+    encode: function encode(_ref2) {
+      var expGolomb = _ref2.expGolomb;
+      var input = _ref2.input;
+      var options = _ref2.options;
+      var indexes = _ref2.indexes;
+      var path = _ref2.path;
+
+      var newPath = path.concat('[when]');
+
+      if (conditionFn(input, options, indexes)) {
+        parseFn.encode({
+          expGolomb: expGolomb,
+          input: input,
+          options: options,
+          indexes: indexes,
+          path: newPath
+        });
       }
     }
   };
 };
 
 exports.when = when;
-var each = function each(conditionFn, parseFn) {
-  return {
-    decode: function decode(expGolomb, output, options) {
-      var index = 0;
+var each = function each(conditionFn) {
+  for (var _len2 = arguments.length, parseFns = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+    parseFns[_key2 - 1] = arguments[_key2];
+  }
 
-      while (conditionFn(index, output, options)) {
-        parseFn.decode(expGolomb, output, options, index);
-        index++;
+  var parseFn = (0, _list.list)(parseFns, true);
+
+  return {
+    decode: function decode(_ref3) {
+      var expGolomb = _ref3.expGolomb;
+      var output = _ref3.output;
+      var options = _ref3.options;
+      var indexes = _ref3.indexes;
+      var path = _ref3.path;
+
+      var newPath = path.concat('[each]');
+      var indexSlot = indexes.length;
+
+      // Add a new index slot for this loop
+      indexes[indexSlot] = 0;
+
+      while (conditionFn(indexes[indexSlot], output, options)) {
+        parseFn.decode({
+          expGolomb: expGolomb,
+          output: output,
+          options: options,
+          indexes: indexes,
+          path: newPath
+        });
+        indexes[indexSlot]++;
       }
+      // Remove the index slot from the list of indexes
+      indexes.length = indexSlot;
 
       return output;
     },
-    encode: function encode(expGolomb, input, options) {
-      var index = 0;
+    encode: function encode(_ref4) {
+      var expGolomb = _ref4.expGolomb;
+      var input = _ref4.input;
+      var options = _ref4.options;
+      var indexes = _ref4.indexes;
+      var path = _ref4.path;
 
-      while (conditionFn(index, input, options)) {
-        parseFn.encode(expGolomb, input, options, index);
-        index++;
+      var newPath = path.concat('[each]');
+      var indexSlot = indexes.length;
+
+      // Add a new index slot for this loop
+      indexes[indexSlot] = 0;
+
+      while (conditionFn(indexes[indexSlot], input, options)) {
+        parseFn.encode({
+          expGolomb: expGolomb,
+          input: input,
+          options: options,
+          indexes: indexes,
+          path: newPath
+        });
+        indexes[indexSlot]++;
       }
+      // Remove the index slot from the list of indexes
+      indexes.length = indexSlot;
     }
   };
 };
 
 exports.each = each;
 var inArray = function inArray(name, array) {
-  var nameSplit = name.split(/\[(\d*)\]/);
-  var property = nameSplit[0];
-  var indexOverride = undefined;
-  var nameArray = undefined;
+  var _propertyHandler = (0, _propertyHandler4.propertyHandler)(name);
 
-  // The `nameSplit` array can either be 1 or 3 long
-  if (nameSplit && nameSplit[0] !== '') {
-    if (nameSplit.length > 1) {
-      nameArray = true;
-      indexOverride = parseFloat(nameSplit[1]);
+  var propertyName = _propertyHandler.propertyName;
+  var indexArray = _propertyHandler.indexArray;
 
-      if (isNaN(indexOverride)) {
-        indexOverride = undefined;
-      }
-    }
-  } else {
-    throw new Error('ExpGolombError: Invalid name "' + name + '".');
-  }
-
-  return function (obj, options, index) {
-    if (nameArray) {
-      return obj[property] && array.indexOf(obj[property][index]) !== -1 || options[property] && array.indexOf(options[property][index]) !== -1;
+  return function (obj, options, indexes) {
+    if (indexArray) {
+      return array.indexOf((0, _propertyHelpers.getProperty)(obj, options, propertyName, (0, _propertyHelpers.indexArrayMerge)(indexes, indexArray))) !== -1;
     } else {
-      return array.indexOf(obj[property]) !== -1 || array.indexOf(options[property]) !== -1;
+      return array.indexOf(obj[propertyName]) !== -1 || array.indexOf(options[propertyName]) !== -1;
     }
   };
 };
 
 exports.inArray = inArray;
 var equals = function equals(name, value) {
-  var nameSplit = name.split(/\[(\d*)\]/);
-  var property = nameSplit[0];
-  var indexOverride = undefined;
-  var nameArray = undefined;
+  var _propertyHandler2 = (0, _propertyHandler4.propertyHandler)(name);
 
-  // The `nameSplit` array can either be 1 or 3 long
-  if (nameSplit && nameSplit[0] !== '') {
-    if (nameSplit.length > 1) {
-      nameArray = true;
-      indexOverride = parseFloat(nameSplit[1]);
+  var propertyName = _propertyHandler2.propertyName;
+  var indexArray = _propertyHandler2.indexArray;
 
-      if (isNaN(indexOverride)) {
-        indexOverride = undefined;
-      }
-    }
-  } else {
-    throw new Error('ExpGolombError: Invalid name "' + name + '".');
-  }
-
-  return function (obj, options, index) {
-    if (nameArray) {
-      return obj[property] && obj[property][index] === value || options[property] && options[property][index] === value;
+  return function (obj, options, indexes) {
+    if (indexArray) {
+      return (0, _propertyHelpers.getProperty)(obj, options, propertyName, (0, _propertyHelpers.indexArrayMerge)(indexes, indexArray)) === value;
     } else {
-      return obj[property] === value || options[property] === value;
+      return obj[propertyName] === value || options[propertyName] === value;
     }
   };
 };
 
 exports.equals = equals;
 var gt = function gt(name, value) {
-  var nameSplit = name.split(/\[(\d*)\]/);
-  var property = nameSplit[0];
-  var indexOverride = undefined;
-  var nameArray = undefined;
+  var _propertyHandler3 = (0, _propertyHandler4.propertyHandler)(name);
 
-  // The `nameSplit` array can either be 1 or 3 long
-  if (nameSplit && nameSplit[0] !== '') {
-    if (nameSplit.length > 1) {
-      nameArray = true;
-      indexOverride = parseFloat(nameSplit[1]);
+  var propertyName = _propertyHandler3.propertyName;
+  var indexArray = _propertyHandler3.indexArray;
 
-      if (isNaN(indexOverride)) {
-        indexOverride = undefined;
-      }
-    }
-  } else {
-    throw new Error('ExpGolombError: Invalid name "' + name + '".');
-  }
-
-  return function (obj, options, index) {
-    if (nameArray) {
-      return obj[property] && obj[property][index] > value || options[property] && options[property][index] > value;
+  return function (obj, options, indexes) {
+    if (indexArray) {
+      return (0, _propertyHelpers.getProperty)(obj, options, propertyName, (0, _propertyHelpers.indexArrayMerge)(indexes, indexArray)) === value;
     } else {
-      return obj[property] > value || options[property] > value;
+      return obj[propertyName] > value || options[propertyName] > value;
     }
   };
 };
 
 exports.gt = gt;
 var not = function not(fn) {
-  return function (obj, options, index) {
-    return !fn(obj, options, index);
+  return function (obj, options, indexes) {
+    return !fn(obj, options, indexes);
   };
 };
 
 exports.not = not;
 var some = function some(conditionFns) {
-  return function (obj, options, index) {
+  return function (obj, options, indexes) {
     return conditionFns.some(function (fn) {
-      return fn(obj, options, index);
+      return fn(obj, options, indexes);
     });
   };
 };
 
 exports.some = some;
 var every = function every(conditionFns) {
-  return function (obj, options, index) {
+  return function (obj, options, indexes) {
     return conditionFns.every(function (fn) {
-      return fn(obj, options, index);
+      return fn(obj, options, indexes);
     });
   };
 };
 
 exports.every = every;
-var whenMoreData = function whenMoreData(parseFn) {
+var whenMoreData = function whenMoreData() {
+  for (var _len3 = arguments.length, parseFns = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+    parseFns[_key3] = arguments[_key3];
+  }
+
+  var parseFn = (0, _list.list)(parseFns, true);
+
   return {
-    decode: function decode(expGolomb, output, options, index) {
+    decode: function decode(_ref5) {
+      var expGolomb = _ref5.expGolomb;
+      var output = _ref5.output;
+      var options = _ref5.options;
+      var indexes = _ref5.indexes;
+      var path = _ref5.path;
+
+      var newPath = path.concat('[whenMoreData]');
+
       if (expGolomb.bitReservoir.length) {
-        return parseFn.decode(expGolomb, output, options, index);
+        return parseFn.decode({
+          expGolomb: expGolomb,
+          output: output,
+          options: options,
+          indexes: indexes,
+          path: newPath
+        });
       }
       return output;
     },
-    encode: function encode(expGolomb, input, options, index) {
-      parseFn.encode(expGolomb, input, options, index);
+    encode: function encode(_ref6) {
+      var expGolomb = _ref6.expGolomb;
+      var input = _ref6.input;
+      var options = _ref6.options;
+      var indexes = _ref6.indexes;
+      var path = _ref6.path;
+
+      var newPath = path.concat('[whenMoreData]');
+
+      parseFn.encode({
+        expGolomb: expGolomb,
+        input: input,
+        options: options,
+        indexes: indexes,
+        path: newPath
+      });
     }
   };
 };
 
 exports.whenMoreData = whenMoreData;
-var whileMoreData = function whileMoreData(parseFn) {
+var whileMoreData = function whileMoreData() {
+  for (var _len4 = arguments.length, parseFns = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+    parseFns[_key4] = arguments[_key4];
+  }
+
+  var parseFn = (0, _list.list)(parseFns, true);
+
   return {
-    decode: function decode(expGolomb, output, options) {
-      var index = 0;
+    decode: function decode(_ref7) {
+      var expGolomb = _ref7.expGolomb;
+      var output = _ref7.output;
+      var options = _ref7.options;
+      var indexes = _ref7.indexes;
+      var path = _ref7.path;
+
+      var newPath = path.concat('[whileMoreData]');
+      var indexSlot = indexes.length;
+
+      // Add a new index slot for this loop
+      indexes[indexSlot] = 0;
 
       while (expGolomb.bitReservoir.length) {
-        parseFn.decode(expGolomb, output, options, index);
-        index++;
+        parseFn.decode({
+          expGolomb: expGolomb,
+          output: output,
+          options: options,
+          indexes: indexes,
+          path: newPath
+        });
+        indexes[indexSlot]++;
       }
+      // Remove the index slot from the list of indexes
+      indexes.length = indexSlot;
 
       return output;
     },
-    encode: function encode(expGolomb, input, options) {
-      var index = 0;
+    encode: function encode(_ref8) {
+      var expGolomb = _ref8.expGolomb;
+      var input = _ref8.input;
+      var options = _ref8.options;
+      var indexes = _ref8.indexes;
+      var path = _ref8.path;
+
+      var newPath = path.concat('[whenMoreData]');
+      var indexSlot = indexes.length;
+
+      // Add a new index slot for this loop
+      indexes[indexSlot] = 0;
+
       var length = 0;
 
       if (Array.isArray(input)) {
@@ -5665,14 +5816,22 @@ var whileMoreData = function whileMoreData(parseFn) {
       }
 
       while (index < length) {
-        parseFn.encode(expGolomb, input, options, index);
-        index++;
+        parseFn.encode({
+          expGolomb: expGolomb,
+          input: input,
+          options: options,
+          indexes: indexes,
+          path: newPath
+        });
+        indexes[indexSlot]++;
       }
+      // Remove the index slot from the list of indexes
+      indexes.length = indexSlot;
     }
   };
 };
 exports.whileMoreData = whileMoreData;
-},{}],23:[function(require,module,exports){
+},{"./list":26,"./property-handler":28,"./property-helpers":29}],23:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -5857,17 +6016,16 @@ ExpGolombDecoder.prototype.countLeadingZeros = function () {
 
 ExpGolombDecoder.prototype.readUnsignedExpGolomb = function () {
   var zeros = this.countLeadingZeros();
-  var bitCount = zeros * 2 + 1;
+  var bitCount = zeros + 1;
 
   if (zeros === -1) {
     throw new Error('Error reading exp-golomb value.');
   }
-
-  var val = parseInt(this.bitReservoir.slice(zeros, bitCount), 2);
+  // Throw away the leading-zeros
+  this.readBits(zeros);
+  var val = this.readBits(bitCount);
 
   val -= 1;
-
-  this.bitReservoir = this.bitReservoir.slice(bitCount);
 
   return val;
 };
@@ -5888,7 +6046,7 @@ ExpGolombDecoder.prototype.readExpGolomb = function () {
 
 ExpGolombDecoder.prototype.readBits = function (bitCount) {
   if (this.bitReservoir.length < bitCount) {
-    throw new Error('Error reading bit stream value. There were (' + this.bitReservoir.length + ') bits remaining but expected (' + bitCount + ').');
+    throw new Error('Error reading bit stream value expected (' + bitCount + ') bits remaining but found (' + this.bitReservoir.length + ')');
   }
 
   var val = parseInt(this.bitReservoir.slice(0, bitCount), 2);
@@ -5900,7 +6058,7 @@ ExpGolombDecoder.prototype.readBits = function (bitCount) {
 
 ExpGolombDecoder.prototype.readRawBits = function (bitCount) {
   if (this.bitReservoir.length < bitCount) {
-    throw new Error('Error reading bit stream value. There were (' + this.bitReservoir.length + ') bits remaining but expected (' + bitCount + ').');
+    throw new Error('Error reading bit stream value expected (' + bitCount + ') bits remaining but found (' + this.bitReservoir.length + ')');
   }
 
   var val = this.bitReservoir.slice(0, bitCount);
@@ -5968,6 +6126,43 @@ ExpGolombEncoder.prototype.writeUnsignedByte = function (value) {
   this.writeBits(8, value);
 };
 },{}],26:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+var list = function list(parseFns, silent) {
+  return {
+    decode: function decode(_ref) {
+      var expGolomb = _ref.expGolomb;
+      var output = _ref.output;
+      var options = _ref.options;
+      var indexes = _ref.indexes;
+      var path = _ref.path;
+
+      var newPath = silent ? path : path.concat('[list]');
+
+      parseFns.forEach(function (fn) {
+        output = fn.decode({
+          expGolomb: expGolomb,
+          output: output,
+          options: options,
+          indexes: indexes,
+          path: newPath
+        }) || output;
+      });
+
+      return output;
+    },
+    encode: function encode(expGolomb, input, options, index) {
+      parseFns.forEach(function (fn) {
+        fn.encode(expGolomb, input, options, index);
+      });
+    }
+  };
+};
+exports.list = list;
+},{}],27:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5991,7 +6186,89 @@ var mergeObj = function mergeObj(a, b) {
   return newObj;
 };
 exports.mergeObj = mergeObj;
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+var propertyHandler = function propertyHandler(property) {
+  var propertySplit = property.split('[');
+  var propertyName = propertySplit[0];
+  var indexArray = null;
+
+  if (propertySplit.length > 1) {
+    indexArray = propertySplit.slice(1).map(parseFloat);
+  }
+
+  return {
+    propertyName: propertyName,
+    indexArray: indexArray
+  };
+};
+exports.propertyHandler = propertyHandler;
+},{}],29:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var getProperty = function getProperty(obj, options, property, indexes) {
+  var firstProperty = obj[property] || options[property];
+
+  if (!indexes.length) {
+    return firstProperty;
+  }
+
+  return indexes.reduce(function (finalProperty, index) {
+    if (Array.isArray(finalProperty) || Object.isObject(finalProperty)) {
+      return finalProperty[index];
+    }
+    return finalProperty;
+  }, firstProperty);
+};
+
+exports.getProperty = getProperty;
+var writeProperty = function writeProperty(obj, options, property, indexes, value) {
+  var firstProperty = obj[property] || options[property];
+  var lastIndex = indexes[indexes.length - 1];
+
+  if (!firstProperty) {
+    if (indexes.length) {
+      firstProperty = obj[property] = [];
+    } else {
+      obj[property] = value;
+      return;
+    }
+  }
+
+  var target = indexes.slice(0, -1).reduce(function (finalProperty, index) {
+    var newProperty = finalProperty[index];
+
+    if (!Array.isArray(finalProperty[index])) {
+      finalProperty[index] = [];
+    }
+
+    return finalProperty[index];
+  }, firstProperty);
+
+  target[lastIndex] = value;
+};
+
+exports.writeProperty = writeProperty;
+var indexArrayMerge = function indexArrayMerge(indexesArray, propertyArray) {
+  var newArray = indexesArray.slice(-propertyArray.length);
+
+  return newArray.map(function (num, index) {
+    if (isNaN(propertyArray[index])) {
+      return num;
+    } else {
+      return propertyArray[index];
+    }
+  });
+};
+exports.indexArrayMerge = indexArrayMerge;
+},{}],30:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -6049,7 +6326,7 @@ var appendRBSPTrailingBits = function appendRBSPTrailingBits(bits) {
   }
 };
 exports.appendRBSPTrailingBits = appendRBSPTrailingBits;
-},{}],28:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -6076,5 +6353,5 @@ thumbCoil.VERSION = '1.2.3';
 
 exports['default'] = thumbCoil;
 module.exports = exports['default'];
-},{"./bit-streams/h264":6,"./inspectors":18}]},{},[28])(28)
+},{"./bit-streams/h264":6,"./inspectors":18}]},{},[31])(31)
 });
