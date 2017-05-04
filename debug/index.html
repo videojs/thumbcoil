@@ -161,8 +161,12 @@
         fileTypeInspector = 'flvInspector';
       }
 
+      console.time('Parsing');
+      console.log(console.memory);
       var inputParsed = thumbcoil[fileTypeInspector].inspect(data);
-
+      console.timeEnd('Parsing');
+      console.log(inputParsed);
+      console.log(console.memory);
       // clear old box info
       output.innerHTML = '';
       thumbcoilUI.trigger('parsed', inputParsed);

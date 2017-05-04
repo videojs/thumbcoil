@@ -7,14 +7,19 @@ import {
   appendRBSPTrailingBits
 } from './rbsp-utils';
 import {mergeObj} from './merge-obj';
+import {list} from './list';
+import {propertyHandler} from './property-handler';
+import {getProperty, writeProperty, indexArrayMerge} from './property-helpers';
 
 /**
  * General ExpGolomb-Encoded-Structure Parse Functions
  */
-export const start = function (name, parseFn) {
+export const start = function (name, ...parseFns) {
+  const parseFn = list(parseFns, true);
+
   return {
     decode: (input, options, output) => {
-      let rawBitString = typedArrayToBitString(input);
+      const rawBitString = typedArrayToBitString(input);
       let bitString = rawBitString;
 
       options = options || {};
@@ -23,32 +28,47 @@ export const start = function (name, parseFn) {
       if (!options.no_trailer_bits) {
         bitString = removeRBSPTrailingBits(rawBitString);
       }
-      let expGolombDecoder = new ExpGolombDecoder(bitString);
+
+      const expGolombDecoder = new ExpGolombDecoder(bitString);
 
       try {
-        return parseFn.decode(expGolombDecoder, output, options);
+        return parseFn.decode({
+          options,
+          output,
+          expGolomb: expGolombDecoder,
+          indexes: [],
+          path: [name]
+        });
       } catch (e) {
-        return e;
+        // Ensure that we always return `output` because we might have
+        // successfully parsed something!
+        return output;
       }
     },
     encode: (input, options) => {
-      let expGolombEncoder = new ExpGolombEncoder();
+      const expGolombEncoder = new ExpGolombEncoder();
 
       options = options || {};
 
-      parseFn.encode(expGolombEncoder, input, options);
+      parseFn.encode({
+        options,
+        input,
+        expGolomb: expGolombEncoder,
+        indexes: [],
+        path: [name]
+      });
 
-      let output = expGolombEncoder.bitReservoir;
-      let bitString = appendRBSPTrailingBits(output);
-      let data = bitStringToTypedArray(bitString);
+      const output = expGolombEncoder.bitReservoir;
+      const bitString = appendRBSPTrailingBits(output);
+      const data = bitStringToTypedArray(bitString);
 
       return data;
     }
   };
 };
 
-export const startArray = function (name, parseFn) {
-  let startObj = start(name, parseFn);
+export const startArray = function (name, ...parseFns) {
+  let startObj = start(name, ...parseFns);
 
   return {
     decode: (input, options) => {
@@ -58,203 +78,116 @@ export const startArray = function (name, parseFn) {
   };
 };
 
-export const list = function (parseFns) {
-  return {
-    decode: (expGolomb, output, options, index) => {
-      parseFns.forEach((fn) => {
-        output = fn.decode(expGolomb, output, options, index) || output;
-      });
-
-      return output;
-    },
-    encode: (expGolomb, input, options, index) => {
-      parseFns.forEach((fn) => {
-        fn.encode(expGolomb, input, options, index);
-      });
-    }
-  };
-};
-
 export const data = function (name, dataType) {
-  let nameSplit = name.split(/\[(\d*)\]/);
-  let property = nameSplit[0];
-  let indexOverride;
-  let nameArray;
-
-  // The `nameSplit` array can either be 1 or 3 long
-  if (nameSplit && nameSplit[0] !== '') {
-    if (nameSplit.length > 1) {
-      nameArray = true;
-      indexOverride = parseFloat(nameSplit[1]);
-
-      if (isNaN(indexOverride)) {
-        indexOverride = undefined;
-      }
-    }
-  } else {
-    throw new Error('ExpGolombError: Invalid name "' + name + '".');
-  }
+  const {propertyName, indexArray} = propertyHandler(name);
 
   return {
     name: name,
-    decode: (expGolomb, output, options, index) => {
+    decode: ({expGolomb, output, options, indexes, path}) => {
       let value;
 
-      if (typeof indexOverride === 'number') {
-        index = indexOverride;
+      try {
+        value = dataType.read(expGolomb, output, options, indexes);
+      } catch (e) {
+        output['Parse Error:'] = `${e.message} at ${path.join('/')}`;
+        throw e;
       }
 
-      value = dataType.read(expGolomb, output, options, index);
-
-      if (!nameArray) {
-        output[property] = value;
+      if (!indexArray) {
+        output[propertyName] = value;
       } else {
-        if (!Array.isArray(output[property])) {
-          output[property] = [];
-        }
-
-        if (index !== undefined) {
-          output[property][index] = value;
-        } else {
-          output[property].push(value);
-        }
+        writeProperty(output, options, propertyName, indexArrayMerge(indexes, indexArray), value);
       }
 
       return output;
     },
-    encode: (expGolomb, input, options, index) => {
+    encode: ({expGolomb, input, options, indexes, path}) => {
       let value;
 
-      if (typeof indexOverride === 'number') {
-        index = indexOverride;
-      }
-
-      if (!nameArray) {
-        value = input[property];
-      } else if (Array.isArray(input[property])) {
-        if (index !== undefined) {
-          value = input[property][index];
-        } else {
-          value = input[property].shift();
-        }
+      if (!indexArray) {
+        value = input[propertyName];
+      } else {
+        value = getProperty(input, options, propertyName, indexArrayMerge(indexes, indexArray));
       }
 
       if (typeof value !== 'number') {
         return;
       }
 
-      value = dataType.write(expGolomb, input, options, index, value);
+      value = dataType.write(expGolomb, input, options, indexes, value);
     }
   };
 };
 
 export const debug = function (prefix) {
   return {
-    decode: (expGolomb, output, options, index) => {
-      console.log(prefix, expGolomb.bitReservoir, output, options, index);
+    decode: ({expGolomb, output, options, indexes, path}) => {
+      console.log(prefix, path.join(','), expGolomb.bitReservoir, output, options, indexes);
     },
-    encode: (expGolomb, input, options, index) => {
-      console.log(prefix, expGolomb.bitReservoir, input, options, index);
+    encode: ({expGolomb, input, options, indexes, path}) => {
+      console.log(prefix, path.join(','), expGolomb.bitReservoir, input, options, indexes);
     }
   };
 };
 
-export const newObj = (name, parseFn) => {
-  let nameSplit = name.split(/\[(\d*)\]/);
-  let property = nameSplit[0];
-  let indexOverride;
-  let nameArray;
-
-  // The `nameSplit` array can either be 1 or 3 long
-  if (nameSplit && nameSplit[0] !== '') {
-    if (nameSplit.length > 1) {
-      nameArray = true;
-      indexOverride = parseFloat(nameSplit[1]);
-
-      if (isNaN(indexOverride)) {
-        indexOverride = undefined;
-      }
-    }
-  } else {
-    throw new Error('ExpGolombError: Invalid name "' + name + '".');
-  }
+export const newObj = (name, ...parseFns) => {
+  const {propertyName, indexArray} = propertyHandler(name);
+  const parseFn = list(parseFns, true);
 
   return {
     name: name,
-    decode: (expGolomb, output, options, index) => {
-      let value;
+    decode: ({expGolomb, output, options, indexes, path}) => {
+      const newPath = path.concat(name);
+      const value = parseFn.decode({
+        expGolomb,
+        output: Object.create(output),
+        options,
+        indexes,
+        path: newPath
+      });
 
-      if (typeof indexOverride === 'number') {
-        index = indexOverride;
-      }
-
-      value = parseFn.decode(expGolomb, Object.create(output), options, index);
-
-      if (!nameArray) {
-        output[property] = value;
+      if (!indexArray) {
+        output[propertyName] = value;
       } else {
-        if (!Array.isArray(output[property])) {
-          output[property] = [];
-        }
-
-        if (index !== undefined) {
-          output[property][index] = value;
-        } else {
-          output[property].push(value);
-        }
+        writeProperty(output, options, propertyName, indexArrayMerge(indexes, indexArray), value);
       }
 
       return output;
     },
-    encode: (expGolomb, input, options, index) => {
+    encode: ({expGolomb, input, options, indexes}) => {
       let value;
 
-      if (typeof indexOverride === 'number') {
-        index = indexOverride;
-      }
-
       if (!nameArray) {
-        value = input[property];
-      } else if (Array.isArray(input[property])) {
-        if (index !== undefined) {
-          value = input[property][index];
-        } else {
-          value = input[property].shift();
-        }
+        value = input[propertyName];
+      } else {
+        value = getProperty(input, options, propertyName, indexArrayMerge(indexes, indexArray));
       }
 
       if (typeof value !== 'number') {
         return;
       }
-      parseFn.encode(expGolomb, value, options, index);
+
+      const newPath = path.concat(name);
+      parseFn.encode({
+        expGolomb,
+        input: value,
+        options,
+        indexes,
+        path: newPath
+      });
     }
   };
 };
 
 export const verify = function (name) {
   return {
-    decode: (expGolomb, output, options, index) => {
+    decode: ({expGolomb, output, options, indexes}) => {
       let len = expGolomb.bitReservoir.length;
-      if (len !== 0) {
-        console.trace('ERROR: ' + name + ' was not completely parsed. There were (' + len + ') bits remaining!');
-        console.log(expGolomb.originalBitReservoir);
-      }
-    },
-    encode: (expGolomb, input, options, index) => {}
-  };
-};
 
-export const pickOptions = function (property, value) {
-  return {
-    decode: (expGolomb, output, options, index) => {
-      if (typeof options[property] !== undefined) {
-   //     options[property][value];
+      if (len !== 0) {
+        output['Validation Error:'] = `${name} was not completely parsed - there were (${len}) bits remaining`;
       }
     },
-    encode: (expGolomb, input, options, index) => {
-      if (typeof options[property] !== undefined) {
-     //   options.values options[property][value];
-      }
-    }
+    encode: ({expGolomb, input, options, indexes}) => {}
   };
 };

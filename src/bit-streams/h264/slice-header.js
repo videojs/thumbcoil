@@ -1,6 +1,7 @@
 'use strict';
 
-import {start, list, data, debug, verify} from '../../lib/combinators';
+import {start, data, debug, verify} from '../../lib/combinators';
+import {list} from '../../lib/list';
 import {when, each, inArray, equals, some, every, not} from '../../lib/conditionals';
 import {ue, u, se, val} from '../../lib/data-types';
 
@@ -54,35 +55,28 @@ let refPicListModification = list([
   when(every([
       not(inArray('slice_type', sliceType.I)),
       not(inArray('slice_type', sliceType.SI))
-    ]), list([
-      data('ref_pic_list_modification_flag_l0', u(1)),
-      when(equals('ref_pic_list_modification_flag_l0', 1),
-        each((index, output) => {
-            return index === 0 || output.modification_of_pic_nums_idc_l0[index - 1] !== 3;
-          },
-          list([
-            data('modification_of_pic_nums_idc_l0[]', ue(v)),
-            when(inArray('modification_of_pic_nums_idc_l0[]', [0, 1]),
-              data('abs_diff_pic_num_minus1_l0[]', ue(v))),
-            when(equals('modification_of_pic_nums_idc_l0[]', 2),
-              data('long_term_pic_num_l0[]', ue(v)))
-          ])))
-    ])),
+    ]),
+    data('ref_pic_list_modification_flag_l0', u(1)),
+    when(equals('ref_pic_list_modification_flag_l0', 1),
+      each((index, output) => {
+          return index === 0 || output.modification_of_pic_nums_idc_l0[index - 1] !== 3;
+        },
+        data('modification_of_pic_nums_idc_l0[]', ue(v)),
+        when(inArray('modification_of_pic_nums_idc_l0[]', [0, 1]),
+          data('abs_diff_pic_num_minus1_l0[]', ue(v))),
+        when(equals('modification_of_pic_nums_idc_l0[]', 2),
+          data('long_term_pic_num_l0[]', ue(v)))))),
   when(inArray('slice_type', sliceType.B),
-    list([
-      data('ref_pic_list_modification_flag_l1', u(1)),
-      when(equals('ref_pic_list_modification_flag_l1', 1),
-        each((index, output) => {
-            return index === 0 || output.modification_of_pic_nums_idc_l1[index - 1] !== 3;
-          },
-          list([
-            data('modification_of_pic_nums_idc_l1[]', ue(v)),
-            when(inArray('modification_of_pic_nums_idc_l1[]', [0, 1]),
-              data('abs_diff_pic_num_minus1_l1[]', ue(v))),
-            when(equals('modification_of_pic_nums_idc_l1[]', 2),
-              data('long_term_pic_num_l1[]', ue(v)))
-          ])))
-    ]))
+    data('ref_pic_list_modification_flag_l1', u(1)),
+    when(equals('ref_pic_list_modification_flag_l1', 1),
+      each((index, output) => {
+          return index === 0 || output.modification_of_pic_nums_idc_l1[index - 1] !== 3;
+        },
+        data('modification_of_pic_nums_idc_l1[]', ue(v)),
+        when(inArray('modification_of_pic_nums_idc_l1[]', [0, 1]),
+          data('abs_diff_pic_num_minus1_l1[]', ue(v))),
+        when(equals('modification_of_pic_nums_idc_l1[]', 2),
+          data('long_term_pic_num_l1[]', ue(v))))))
 ]);
 
 let refPicListMvcModification = {
@@ -97,75 +91,53 @@ let predWeightTable = list([
   each((index, output) => {
       return index <= output.num_ref_idx_l0_active_minus1;
     },
-    list([
-      data('luma_weight_l0_flag', u(1)),
-      when(equals('luma_weight_l0_flag', 1),
-        list([
-          data('luma_weight_l0[]', se(v)),
-          data('luma_offset_l0[]', se(v)),
-          when(not(equals('ChromaArrayType', 0)),
-            list([
-              data('chroma_weight_l0_flag', u(1)),
-              when(equals('chroma_weight_l0_flag', 1),
-                list([
-                  data('chroma_weight_l0_Cr[]', se(v)),
-                  data('chroma_offset_l0_Cr[]', se(v)),
-                  data('chroma_weight_l0_Cb[]', se(v)),
-                  data('chroma_offset_l0_Cb[]', se(v))
-                ]))
-            ]))
-        ]))
-    ])),
+    data('luma_weight_l0_flag', u(1)),
+    when(equals('luma_weight_l0_flag', 1),
+      data('luma_weight_l0[]', se(v)),
+      data('luma_offset_l0[]', se(v)),
+      when(not(equals('ChromaArrayType', 0)),
+        data('chroma_weight_l0_flag', u(1)),
+        when(equals('chroma_weight_l0_flag', 1),
+          data('chroma_weight_l0_Cr[]', se(v)),
+          data('chroma_offset_l0_Cr[]', se(v)),
+          data('chroma_weight_l0_Cb[]', se(v)),
+          data('chroma_offset_l0_Cb[]', se(v)))))),
   when(inArray('slice_type', sliceType.B),
     each((index, output) => {
         return index <= output.num_ref_idx_l1_active_minus1;
       },
-      list([
-        data('luma_weight_l1_flag', u(1)),
-        when(equals('luma_weight_l1_flag', 1),
-          list([
-            data('luma_weight_l1[]', se(v)),
-            data('luma_offset_l1[]', se(v)),
-            when(not(equals('ChromaArrayType', 0)),
-              list([
-                data('chroma_weight_l1_flag', u(1)),
-                when(equals('chroma_weight_l1_flag', 1),
-                  list([
-                    data('chroma_weight_l1_Cr[]', se(v)),
-                    data('chroma_offset_l1_Cr[]', se(v)),
-                    data('chroma_weight_l1_Cb[]', se(v)),
-                    data('chroma_offset_l1_Cb[]', se(v))
-                  ]))
-              ]))
-          ]))
-      ])))
+      data('luma_weight_l1_flag', u(1)),
+      when(equals('luma_weight_l1_flag', 1),
+        data('luma_weight_l1[]', se(v)),
+        data('luma_offset_l1[]', se(v)),
+        when(not(equals('ChromaArrayType', 0)),
+          data('chroma_weight_l1_flag', u(1)),
+          when(equals('chroma_weight_l1_flag', 1),
+            data('chroma_weight_l1_Cr[]', se(v)),
+            data('chroma_offset_l1_Cr[]', se(v)),
+            data('chroma_weight_l1_Cb[]', se(v)),
+            data('chroma_offset_l1_Cb[]', se(v)))))))
 ]);
 
 let decRefPicMarking = list([
   when(equals('nal_unit_type', 5),
-    list([
-      data('no_output_of_prior_pics_flag', u(1)),
-      data('long_term_reference_flag', u(1))
-    ])),
+    data('no_output_of_prior_pics_flag', u(1)),
+    data('long_term_reference_flag', u(1))),
   when(not(equals('nal_unit_type', 5)),
-    list([
-      data('adaptive_ref_pic_marking_mode_flag', u(1)),
-      when(equals('adaptive_ref_pic_marking_mode_flag', 1),
-        each((index, output) => {
-            return index === 0 || output.memory_management_control_operation[index - 1] !== 0;
-          },
-          list([
-            data('memory_management_control_operation[]', ue(v)),
-            when(inArray('memory_management_control_operation[]', [1, 3]),
-              data('difference_of_pic_nums_minus1[]', ue(v))),
-            when(inArray('memory_management_control_operation[]', [2]),
-              data('long_term_pic_num[]', ue(v))),
-            when(inArray('memory_management_control_operation[]', [3, 6]),
-              data('long_term_frame_idx[]', ue(v))),
-            when(inArray('memory_management_control_operation[]', [4]),
-              data('max_long_term_frame_idx_plus1[]', ue(v)))
-          ])))
-    ]))
+    data('adaptive_ref_pic_marking_mode_flag', u(1)),
+    when(equals('adaptive_ref_pic_marking_mode_flag', 1),
+      each((index, output) => {
+          return index === 0 || output.memory_management_control_operation[index - 1] !== 0;
+      },
+      data('memory_management_control_operation[]', ue(v)),
+      when(inArray('memory_management_control_operation[]', [1, 3]),
+        data('difference_of_pic_nums_minus1[]', ue(v))),
+      when(inArray('memory_management_control_operation[]', [2]),
+        data('long_term_pic_num[]', ue(v))),
+      when(inArray('memory_management_control_operation[]', [3, 6]),
+        data('long_term_frame_idx[]', ue(v))),
+      when(inArray('memory_management_control_operation[]', [4]),
+        data('max_long_term_frame_idx_plus1[]', ue(v))))))
 ]);
 
 const sliceHeader = list([
@@ -176,32 +148,28 @@ const sliceHeader = list([
     data('colour_plane_id', u(2))),
   data('frame_num', u(frameNumBits)),
   when(equals('frame_mbs_only_flag', 0),
-    list([
-      data('field_pic_flag', u(1)),
-      when(equals('field_pic_flag', 1),
-        data('bottom_field_flag', u(1))),
-    ])),
+    data('field_pic_flag', u(1)),
+    when(equals('field_pic_flag', 1),
+      data('bottom_field_flag', u(1)))),
   when(equals('idrPicFlag', 1),
     data('idr_pic_id', ue(v))),
   when(equals('pic_order_cnt_type', 0),
-    list([
-      data('pic_order_cnt_lsb', u(picOrderCntBits)),
-      when(every([
+    data('pic_order_cnt_lsb', u(picOrderCntBits)),
+    when(every([
         equals('bottom_field_pic_order_in_frame_present_flag', 1),
         not(equals('field_pic_flag', 1))
-      ]), data('delta_pic_order_cnt_bottom', se(v)))
-    ])),
+      ]),
+      data('delta_pic_order_cnt_bottom', se(v)))),
   when(every([
       equals('pic_order_cnt_type', 1),
       not(equals('delta_pic_order_always_zero_flag', 1))
     ]),
-    list([
-      data('delta_pic_order_cnt[0]', se(v)),
-      when(every([
-          equals('bottom_field_pic_order_in_frame_present_flag', 1),
-          not(equals('field_pic_flag', 1))
-        ]), data('delta_pic_order_cnt[1]', se(v)))
-    ])),
+    data('delta_pic_order_cnt[0]', se(v)),
+    when(every([
+        equals('bottom_field_pic_order_in_frame_present_flag', 1),
+        not(equals('field_pic_flag', 1))
+      ]),
+      data('delta_pic_order_cnt[1]', se(v)))),
   when(equals('redundant_pic_cnt_present_flag', 1),
     data('redundant_pic_cnt', ue(v))),
   when(inArray('slice_type', sliceType.B),
@@ -210,46 +178,43 @@ const sliceHeader = list([
       inArray('slice_type', sliceType.P),
       inArray('slice_type', sliceType.SP),
       inArray('slice_type', sliceType.B)
-    ]), list([
-      data('num_ref_idx_active_override_flag', u(1)),
-      when(equals('num_ref_idx_active_override_flag', 1),
-        list([
-          data('num_ref_idx_l0_active_minus1', ue(v)),
-          when(inArray('slice_type', sliceType.B),
-            data('num_ref_idx_l1_active_minus1', ue(v)))
-        ]))
-    ])),
+    ]),
+    data('num_ref_idx_active_override_flag', u(1)),
+    when(equals('num_ref_idx_active_override_flag', 1),
+      data('num_ref_idx_l0_active_minus1', ue(v)),
+      when(inArray('slice_type', sliceType.B),
+        data('num_ref_idx_l1_active_minus1', ue(v))))),
   when(some([
       equals('nal_unit_type', 20),
       equals('nal_unit_type', 21)
-    ]), refPicListMvcModification),
+    ]),
+    refPicListMvcModification),
   when(every([
       not(equals('nal_unit_type', 20)),
       not(equals('nal_unit_type', 21))
-    ]), refPicListModification),
+    ]),
+    refPicListModification),
   when(useWeightedPredictionTable, predWeightTable),
   when(not(equals('nal_ref_idc', 0)), decRefPicMarking),
   when(every([
-    equals('entropy_coding_mode_flag', 1),
-    not(inArray('slice_type', sliceType.I)),
-    not(inArray('slice_type', sliceType.SI))
-  ]), data('cabac_init_idc', ue(v))),
+      equals('entropy_coding_mode_flag', 1),
+      not(inArray('slice_type', sliceType.I)),
+      not(inArray('slice_type', sliceType.SI))
+    ]),
+    data('cabac_init_idc', ue(v))),
   data('slice_qp_delta', se(v)),
   when(inArray('slice_type', sliceType.SP),
     data('sp_for_switch_flag', u(1))),
   when(some([
       inArray('slice_type', sliceType.SP),
       inArray('slice_type', sliceType.SI),
-    ]), data('slice_qs_delta', se(v))),
+    ]),
+    data('slice_qs_delta', se(v))),
   when(equals('deblocking_filter_control_present_flag', 1),
-    list([
-      data('disable_deblocking_filter_idc', ue(v)),
-      when(not(equals('disable_deblocking_filter_idc', 1)),
-        list([
-          data('slice_alpha_c0_offset_div2', se(v)),
-          data('slice_beta_offset_div2', se(v)),
-        ]))
-    ])),
+    data('disable_deblocking_filter_idc', ue(v)),
+    when(not(equals('disable_deblocking_filter_idc', 1)),
+      data('slice_alpha_c0_offset_div2', se(v)),
+      data('slice_beta_offset_div2', se(v)))),
   when(every([
       not(equals('num_slice_groups_minus1', 0)),
       some([

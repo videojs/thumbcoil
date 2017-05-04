@@ -1,7 +1,8 @@
 'use strict';
 
 import {ExpGolombDecoder, ExpGolombEncoder} from '../../lib/exp-golomb-string';
-import {start, startArray, list, data, debug, verify, newObj} from '../../lib/combinators';
+import {start, startArray, data, debug, verify, newObj} from '../../lib/combinators';
+import {list} from '../../lib/list';
 import {when, each, inArray, equals, some, every, not, whileMoreData, gt} from '../../lib/conditionals';
 import {ue, u, se, val} from '../../lib/data-types';
 import {
@@ -39,18 +40,14 @@ const seiPayloadCodecs = {
         each((index, output, options) => {
           return index <= options.cpb_cnt_minus1;
         },
-        list([
-          data('initial_cpb_removal_delay[]', u(initialCpbRemovalDelayLength)),
-          data('initial_cpb_removal_delay_offset[]', u(initialCpbRemovalDelayLength))
-        ]))),
+        data('initial_cpb_removal_delay[]', u(initialCpbRemovalDelayLength)),
+        data('initial_cpb_removal_delay_offset[]', u(initialCpbRemovalDelayLength)))),
       when(equals('vcl_hrd_parameters_present_flag', 1),
         each((index, output, options) => {
           return index <= options.cpb_cnt_minus1;
         },
-        list([
-          data('initial_cpb_removal_delay[]', u(initialCpbRemovalDelayLength)),
-          data('initial_cpb_removal_delay_offset[]', u(initialCpbRemovalDelayLength))
-        ])))
+        data('initial_cpb_removal_delay[]', u(initialCpbRemovalDelayLength)),
+        data('initial_cpb_removal_delay_offset[]', u(initialCpbRemovalDelayLength))))
     ])
   },
   '1': {
@@ -61,74 +58,59 @@ const seiPayloadCodecs = {
           equals('nal_hrd_parameters_present_flag', 1),
           equals('vcl_hrd_parameters_present_flag', 1)
         ]),
-        list([
-          data('cpb_removal_delay', u(cpbRemovalDelayBits)),
-          data('dpb_output_delay', u(dpbOutputDelayBits))
-        ])),
+        data('cpb_removal_delay', u(cpbRemovalDelayBits)),
+        data('dpb_output_delay', u(dpbOutputDelayBits))),
       when(equals('pic_struct_present_flag', 1),
-        list([
-          data('pic_struct', u(4)),
+        data('pic_struct', u(4)),
 
-          // Interpret pic_struct
-          when(equals('pic_struct', 0),
-            data('NumClockTS', val(1))),
-          when(equals('pic_struct', 1),
-            data('NumClockTS', val(1))),
-          when(equals('pic_struct', 2),
-            data('NumClockTS', val(1))),
-          when(equals('pic_struct', 3),
-            data('NumClockTS', val(2))),
-          when(equals('pic_struct', 4),
-            data('NumClockTS', val(2))),
-          when(equals('pic_struct', 5),
-            data('NumClockTS', val(3))),
-          when(equals('pic_struct', 6),
-            data('NumClockTS', val(3))),
-          when(equals('pic_struct', 7),
-            data('NumClockTS', val(2))),
-          when(equals('pic_struct', 8),
-            data('NumClockTS', val(2))),
+        // Interpret pic_struct
+        when(equals('pic_struct', 0),
+          data('NumClockTS', val(1))),
+        when(equals('pic_struct', 1),
+          data('NumClockTS', val(1))),
+        when(equals('pic_struct', 2),
+          data('NumClockTS', val(1))),
+        when(equals('pic_struct', 3),
+          data('NumClockTS', val(2))),
+        when(equals('pic_struct', 4),
+          data('NumClockTS', val(2))),
+        when(equals('pic_struct', 5),
+          data('NumClockTS', val(3))),
+        when(equals('pic_struct', 6),
+          data('NumClockTS', val(3))),
+        when(equals('pic_struct', 7),
+          data('NumClockTS', val(2))),
+        when(equals('pic_struct', 8),
+          data('NumClockTS', val(2))),
 
-          each((index, output) => {
-            return index < output.NumClockTS;
-          }, list([
-            data('clock_timestamp_flag[]', u(1)),
-            when(equals('clock_timestamp_flag[]', 1),
-              list([
-                data('ct_type[]', u(2)),
-                data('nuit_field_based_flag[]', u(1)),
-                data('counting_type[]', u(5)),
-                data('full_timestamp_flag[]', u(1)),
-                data('discontinuity_flag[]', u(1)),
-                data('cnt_dropped_flag[]', u(1)),
-                data('n_frames[]', u(8)),
-                when(equals('full_timestamp_flag[]', 1),
-                  list([
-                    data('seconds_value[]', u(6)),
-                    data('minutes_value[]', u(6)),
-                    data('hours_value[]', u(5))
-                  ])),
-                when(equals('full_timestamp_flag[]', 0),
-                  list([
-                    data('seconds_flag[]', u(1)),
-                    when(equals('seconds_flag[]', 1),
-                      list([
-                        data('seconds_value[]', u(6)),
-                        data('minutes_flag[]', u(1)),
-                        when(equals('minutes_flag[]', 1),
-                          list([
-                            data('minutes_value[]', u(6)),
-                            data('hours_flag[]', u(1)),
-                            when(equals('hours_flag[]', 1),
-                              data('hours_value[]', u(5)))
-                          ]))
-                      ]))
-                  ])),
-                  when(gt('time_offset_length', 0),
-                    data('time_offset', u(timeOffsetBits)))
-              ]))
-          ]))
-        ]))
+        each((index, output) => {
+          return index < output.NumClockTS;
+        },
+        data('clock_timestamp_flag[]', u(1)),
+        when(equals('clock_timestamp_flag[]', 1),
+          data('ct_type[]', u(2)),
+          data('nuit_field_based_flag[]', u(1)),
+          data('counting_type[]', u(5)),
+          data('full_timestamp_flag[]', u(1)),
+          data('discontinuity_flag[]', u(1)),
+          data('cnt_dropped_flag[]', u(1)),
+          data('n_frames[]', u(8)),
+          when(equals('full_timestamp_flag[]', 1),
+            data('seconds_value[]', u(6)),
+            data('minutes_value[]', u(6)),
+            data('hours_value[]', u(5))),
+          when(equals('full_timestamp_flag[]', 0),
+            data('seconds_flag[]', u(1)),
+            when(equals('seconds_flag[]', 1),
+              data('seconds_value[]', u(6)),
+              data('minutes_flag[]', u(1)),
+              when(equals('minutes_flag[]', 1),
+                data('minutes_value[]', u(6)),
+                data('hours_flag[]', u(1)),
+                when(equals('hours_flag[]', 1),
+                  data('hours_value[]', u(5)))))),
+            when(gt('time_offset_length', 0),
+              data('time_offset', u(timeOffsetBits))))))
       ])
   },
   '2': {
@@ -157,14 +139,12 @@ const seiPayloadCodecs = {
         return index < output.cc_count;
       },
       newObj('cc_data_pkts[]',
-        list([
-          data('type', val('cc_data_pkt')),
-          data('marker_bits', u(5)),
-          data('cc_valid', u(1)),
-          data('cc_type', u(2)),
-          data('cc_data_1', u(8)),
-          data('cc_data_2', u(8)),
-        ]))),
+        data('type', val('cc_data_pkt')),
+        data('marker_bits', u(5)),
+        data('cc_valid', u(1)),
+        data('cc_type', u(2)),
+        data('cc_data_1', u(8)),
+        data('cc_data_2', u(8)))),
       data('marker_bits', u(8))
     ])
   },
@@ -300,7 +280,8 @@ const seiPayloadCodecs = {
 };
 
 const seiPayloadParser = {
-  decode: function (expGolomb, output, options, index) {
+  decode: function ({expGolomb, output, options, indexes, path}) {
+    let index = indexes[0];
     let message = {
       payloadType: 0,
       payloadSize: 0,
@@ -326,7 +307,13 @@ const seiPayloadParser = {
 
       if (payloadCodec.codec) {
         let subExpGolomb = new ExpGolombDecoder(bitString);
-        payloadCodec.codec.decode(subExpGolomb, message, options);
+        payloadCodec.codec.decode({
+          expGolomb: subExpGolomb,
+          output: message,
+          options,
+          path,
+          indexes
+        });
       } else {
         message.data = bitStringToTypedArray(bitString);
       }
@@ -339,8 +326,9 @@ const seiPayloadParser = {
 
     return output;
   },
-  encode: function (expGolomb, input, options, index) {
+  encode: function ({expGolomb, input, options, indexes, path}) {
     // This function was never tested...
+    let index = indexes[0];
     let message = input[index];
     let payloadTypeRemaining = message.payloadType;
 
@@ -362,7 +350,13 @@ const seiPayloadParser = {
 
     if (payloadCodec && payloadCodec.codec) {
       let subExpGolomb = new ExpGolombEncoder();
-      payloadCodec.codec.encode(subExpGolomb, message, options);
+      payloadCodec.codec.encode({
+        expGolomb: subExpGolomb,
+        input: message,
+        options,
+        path,
+        indexes
+      });
       let bits = subExpGolomb.bitReservoir;
 
       if (bits.length % 8 !== 0) {
