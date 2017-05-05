@@ -34,7 +34,13 @@ export const validateContainers = (esMap) => {
   const iFrames = esMap.filter((esEl) => esEl.type === 'video').filter(isIFrame);
 
   if (iFrames.length === 0) {
-    warnings.push('Video has no I frames');
+    warnings.push('Segment has no I-frames');
+  }
+
+  const firstVideoFrame = esMap.find((esEl) => esEl.type === 'video');
+
+  if (firstVideoFrame && !isIFrame(firstVideoFrame)) {
+    warnings.push('Segment does not start with an I-frame');
   }
 
   const unknownPackets = esMap.filter((esEl) => esEl.type.startsWith('unknown-'));
