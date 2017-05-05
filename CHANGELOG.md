@@ -6,6 +6,9 @@ _(none)_
 
 --------------------
 
+## 1.2.3-hackweek (2017-05-04)
+_(none)_
+
 ## 1.2.3 (2017-04-19)
 * Added support for AAC bitstream parsing
 * Added some rudimentary support for PMT ES_info descriptor data
