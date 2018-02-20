@@ -1,5 +1,7 @@
 # Thumbcoil
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/videojs/thumbcoil.svg)](https://greenkeeper.io/)
+
 Thumbcoil is a video inspector tool that can unpackage various media containers and inspect the bitstreams therein. Thumbcoil runs entirely within your browser so that none of your video data is ever transmitted to a server.
 
 ## Table of Contents
