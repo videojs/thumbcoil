@@ -499,6 +499,24 @@ const parse = {
     }
     return result;
   },
+  stss: function (data) {
+    var
+      view = new DataView(data.buffer, data.byteOffset, data.byteLength),
+      result = {
+        version: data[0],
+        flags: new Uint8Array(data.subarray(1, 4)),
+        syncSamples: []
+      },
+      entryCount = view.getUint32(4),
+      i;
+
+    for (i = 8; entryCount; i += 4, entryCount--) {
+      result.syncSamples.push({
+        sampleNumber: view.getUint32(i)
+      });
+    }
+    return result;
+  },
   styp: function (data) {
     return parse.ftyp(data);
   },
