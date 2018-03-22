@@ -480,6 +480,25 @@ const parse = {
     }
     return result;
   },
+  ctts: function (data) {
+    var
+      view = new DataView(data.buffer, data.byteOffset, data.byteLength),
+      result = {
+        version: data[0],
+        flags: new Uint8Array(data.subarray(1, 4)),
+        compositionTimeOffsetToSamples: []
+      },
+      entryCount = view.getUint32(4),
+      i;
+
+    for (i = 8; entryCount; i += 8, entryCount--) {
+      result.compositionTimeOffsetToSamples.push({
+        sampleCount: view.getUint32(i),
+        sampleOffset: view.getUint32(i + 4)
+      });
+    }
+    return result;
+  },
   styp: function (data) {
     return parse.ftyp(data);
   },
